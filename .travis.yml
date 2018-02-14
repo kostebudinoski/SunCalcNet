@@ -9,5 +9,5 @@ branches:
     - master
 script:
  - dotnet test ./SunCalc.Tests/SunCalc.Tests.csproj -c Release -f netcoreapp2.0
- - dotnet build -c Release
- - dotnet pack -c Release --no-build
+ - dotnet build -c Release -f netcoreapp2.0
+ - dotnet pack -c Release /p:TargetFrameworks=netcoreapp2.0 --no-build 
