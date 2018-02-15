@@ -1,14 +1,7 @@
 SunCalc-Net
 ============
 
-A .NET port of the [SunCalc JS lib](https://github.com/mourner/suncalc) for calculating sun/moon positions and phases, created by Vladimir Agafonkin ([@mourner](https://github.com/mourner))
-as a part of the [SunCalc.net project](http://suncalc.net).
-
-Most calculations are based on the formulas given in the excellent Astronomy Answers articles
-about [position of the sun](http://aa.quae.nl/en/reken/zonpositie.html)
-and [the planets](http://aa.quae.nl/en/reken/hemelpositie.html).
-You can read about different twilight phases calculated by SunCalc
-in the [Twilight article on Wikipedia](http://en.wikipedia.org/wiki/Twilight).
+A .NET port of the [SunCalc JS lib](https://github.com/mourner/suncalc) for calculating sun/moon positions and phases.
 
 Usage example
 ==========
@@ -60,6 +53,18 @@ Assert.Equal(0.4848068202456373, moonIllum.Fraction, 15);
 Assert.Equal(0.7548368838538762, moonIllum.Phase, 15);
 Assert.Equal(1.6732942678578346, moonIllum.Angle, 15);
 ```
+
+About Suncalc.js
+==========
+
+SunCalc is a tiny BSD-licensed JavaScript library for calculating sun position, sunlight phases (times for sunrise, sunset, dusk, etc.), moon position and lunar phase for the given location and time, created by Vladimir Agafonkin ([@mourner](https://github.com/mourner))
+as a part of the [SunCalc.net project](http://suncalc.net).
+
+Most calculations are based on the formulas given in the excellent Astronomy Answers articles
+about [position of the sun](http://aa.quae.nl/en/reken/zonpositie.html)
+and [the planets](http://aa.quae.nl/en/reken/hemelpositie.html).
+You can read about different twilight phases calculated by SunCalc
+in the [Twilight article on Wikipedia](http://en.wikipedia.org/wiki/Twilight).
 
 Sun phases
 ==========
