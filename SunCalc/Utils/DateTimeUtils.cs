@@ -17,6 +17,11 @@ namespace SunCalc.Utils
         {
             return ToJulianDate(date) - Constants.J2000;
         }
+
+        public static DateTime HoursLater(this DateTime date, double h)
+        {
+            return date.AddHours(h);
+        }
         
         /// <summary>
         /// OADate is similar to Julian Dates, but uses a different starting point (December 30, 1899 vs. January 1, 4713 BC).

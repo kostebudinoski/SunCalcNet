@@ -70,16 +70,16 @@ namespace SunCalc.Tests
             var lng = 30.5;
             
             //Act
-            var sunPosition = SunCalc.GetSunPhases(date, lat, lng).ToList();
+            var sunPhases = SunCalc.GetSunPhases(date, lat, lng).ToList();
 
             //Assert
             foreach (var testSunPhase in testData)
             {
-                var sunPositionValue = sunPosition.First(x => x.Name.Value == testSunPhase.Name.Value);
+                var sunPhaseValue = sunPhases.First(x => x.Name.Value == testSunPhase.Name.Value);
 
                 var testDataPhaseTime = testSunPhase.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
-                var sunPositionPhaseTime = sunPositionValue.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
-                Assert.Equal(testDataPhaseTime, sunPositionPhaseTime);
+                var sunPhaseTime = sunPhaseValue.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
+                Assert.Equal(testDataPhaseTime, sunPhaseTime);
             }
         }
 
@@ -96,6 +96,28 @@ namespace SunCalc.Tests
             Assert.Equal(0.4848068202456373, moonIllum.Fraction, 15);
             Assert.Equal(0.7548368838538762, moonIllum.Phase, 15);
             Assert.Equal(1.6732942678578346, moonIllum.Angle, 15);
+        }
+
+        [Fact]
+        public void Get_Moon_Times_Returns_MoonRise_And_Set_Times()
+        {
+            //Arrange
+            var date = new DateTime(2013, 3, 4, 0, 0, 0, DateTimeKind.Utc);
+            var lat = 50.5;
+            var lng = 30.5;
+            
+            //Act
+            var moonPhase = SunCalc.GetMoonPhase(date, lat, lng);
+            
+            //Assert
+            Assert.NotNull(moonPhase.Rise);
+            Assert.NotNull(moonPhase.Set);
+            var rise = moonPhase.Rise.Value.ToString("yyyy-MM-dd hh:mm:ss");
+            var set = moonPhase.Set.Value.ToString("yyyy-MM-dd hh:mm:ss");
+            Assert.Equal("2013-03-04 11:54:29", rise);
+            Assert.Equal("2013-03-04 07:47:58", set);
+            Assert.False(moonPhase.AlwaysDown);
+            Assert.False(moonPhase.AlwaysUp);
         }
     }
 }

@@ -133,5 +133,103 @@ namespace SunCalc
 
             return new MoonIllumination(fraction, phase, angle);
         }
+
+        /// <summary>
+        /// Calculates phases of the moon for a single day and latitude/longitude.
+        /// Calculations for moon rise/set times are based on http://www.stargazing.net/kepler/moonrise.html article.
+        /// </summary>
+        /// <param name="date"></param>
+        /// <param name="lat"></param>
+        /// <param name="lng"></param>
+        public static MoonPhase GetMoonPhase(DateTime date, double lat, double lng)
+        {
+            const double hc = 0.133 * Constants.Rad;
+            var h0 = GetMoonPosition(date, lat, lng).Altitude - hc;
+            double? rise = null;
+            double? set = null;
+            double ye = 0;
+            
+            // go in 2-hour chunks,
+            // each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
+            for (var i = 1; i <= 24; i += 2)
+            {
+                var h1 = GetMoonPosition(date.HoursLater(i), lat, lng).Altitude - hc;
+                var h2 = GetMoonPosition(date.HoursLater(i + 1), lat, lng).Altitude - hc;
+
+                var a = (h0 + h2) / 2 - h1;
+                var b = (h2 - h0) / 2;
+                var xe = -b / (2 * a);
+                ye = (a * xe + b) * xe + h1;
+                var d = b * b - 4 * a * h1;
+                var roots = 0;
+                double x1 = 0;
+                double x2 = 0;
+
+                if (d >= 0)
+                {
+                    var dx = Math.Sqrt(d) / (Math.Abs(a) * 2);
+                    x1 = xe - dx;
+                    x2 = xe + dx;
+                    if (Math.Abs(x1) <= 1)
+                    {
+                        roots++;
+                    }
+
+                    if (Math.Abs(x2) <= 1)
+                    {
+                        roots++;
+                    }
+
+                    if (x1 < -1)
+                    {
+                        x1 = x2;
+                    }
+                }
+
+                if (roots == 1)
+                {
+                    if (h0 < 0)
+                    {
+                        rise = i + x1;
+                    }
+                    else
+                    {
+                        set = i + x1;
+                    }
+                }
+                else if (roots == 2)
+                {
+                    rise = i + (ye < 0 ? x2 : x1);
+                    set = i + (ye < 0 ? x1 : x2);
+                }
+
+                if (rise.HasValue && set.HasValue)
+                {
+                    break;
+                }
+
+                h0 = h2;
+            }
+
+            var moonPhase = new MoonPhase();
+            if (rise.HasValue)
+            {
+                moonPhase.Rise = date.HoursLater(rise.Value);
+            }
+
+            if (set.HasValue)
+            {
+                moonPhase.Set = date.HoursLater(set.Value);
+            }
+
+            if (rise.HasValue || set.HasValue)
+            {
+                return moonPhase;
+            }
+            
+            moonPhase.AlwaysUp = ye > 0;
+            moonPhase.AlwaysDown = !moonPhase.AlwaysUp;
+            return moonPhase;
+        }
     }
 }
