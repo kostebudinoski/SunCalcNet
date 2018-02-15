@@ -82,5 +82,20 @@ namespace SunCalc.Tests
                 Assert.Equal(testDataPhaseTime, sunPositionPhaseTime);
             }
         }
+
+        [Fact]
+        public void Get_Moon_Illumination_Returns_Fraction_And_Angle_Of_Moons_Illuminated_Limb_And_Phase()
+        {
+            //Arrange
+            var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+            
+            //Act
+            var moonIllum = SunCalc.GetMoonIllumination(date);
+            
+            //Assert
+            Assert.Equal(0.4848068202456373, moonIllum.Fraction, 15);
+            Assert.Equal(0.7548368838538762, moonIllum.Phase, 15);
+            Assert.Equal(1.6732942678578346, moonIllum.Angle, 15);
+        }
     }
 }

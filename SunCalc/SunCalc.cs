@@ -21,11 +21,11 @@ namespace SunCalc
             var phi = Constants.Rad * lat;
             var d = date.ToDays();
 
-            var equatorialCoords = Sun.GetEquatorialCoords(d);
-            var h = Position.GetSiderealTime(d, lw) - equatorialCoords.RightAscension;
+            var sunCoords = Sun.GetEquatorialCoords(d);
+            var h = Position.GetSiderealTime(d, lw) - sunCoords.RightAscension;
 
-            var azimuth = Position.GetAzimuth(h, phi, equatorialCoords.Declination);
-            var altitude = Position.GetAltitude(h, phi, equatorialCoords.Declination);
+            var azimuth = Position.GetAzimuth(h, phi, sunCoords.Declination);
+            var altitude = Position.GetAltitude(h, phi, sunCoords.Declination);
 
             return new SunPosition(azimuth, altitude);
         }
@@ -43,19 +43,19 @@ namespace SunCalc
             var phi = Constants.Rad * lat;
             var d = date.ToDays();
 
-            var geocentricCoords = Moon.GetGeocentricCoords(d);
-            var h = Position.GetSiderealTime(d, lw) - geocentricCoords.RightAscension;
-            var hAltitude = Position.GetAltitude(h, phi, geocentricCoords.Declination);
+            var moonCoords = Moon.GetGeocentricCoords(d);
+            var h = Position.GetSiderealTime(d, lw) - moonCoords.RightAscension;
+            var hAltitude = Position.GetAltitude(h, phi, moonCoords.Declination);
 
             // formula 14.1 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
-            var pa = Math.Atan2(Math.Sin(h), Math.Tan(phi) * Math.Cos(geocentricCoords.Declination) - Math.Sin(geocentricCoords.Declination) * Math.Cos(h));
+            var pa = Math.Atan2(Math.Sin(h), Math.Tan(phi) * Math.Cos(moonCoords.Declination) - Math.Sin(moonCoords.Declination) * Math.Cos(h));
 
             // altitude correction for refraction
             hAltitude = hAltitude + Position.GetAstroRefraction(hAltitude);
 
-            var azimuth = Position.GetAzimuth(h, phi, geocentricCoords.Declination);
+            var azimuth = Position.GetAzimuth(h, phi, moonCoords.Declination);
 
-            return new MoonPosition(azimuth, hAltitude, geocentricCoords.Distance, pa);
+            return new MoonPosition(azimuth, hAltitude, moonCoords.Distance, pa);
         }
 
         /// <summary>
@@ -98,6 +98,40 @@ namespace SunCalc
             }
 
             return sunPhaseCol;
+        }
+
+        /// <summary>
+        /// Calculates illumination parameters of the moon.
+        /// Location is not needed because percentage will be the same for both Northern and Southern hemisphere.
+        /// Based on http://idlastro.gsfc.nasa.gov/ftp/pro/astro/mphase.pro formulas and
+        /// Chapter 48 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        public static MoonIllumination GetMoonIllumination(DateTime date)
+        {
+            var d = date.ToDays();
+            const int sdist = 149598000; // distance from Earth to Sun in km
+            var sunCoords = Sun.GetEquatorialCoords(d);
+            var moonCoords = Moon.GetGeocentricCoords(d);
+            
+            var phi = Math.Acos(Math.Sin(sunCoords.Declination) * Math.Sin(moonCoords.Declination) +
+                                Math.Cos(sunCoords.Declination) * Math.Cos(moonCoords.Declination) *
+                                Math.Cos(sunCoords.RightAscension - moonCoords.RightAscension));
+
+            var inc = Math.Atan2(sdist * Math.Sin(phi), moonCoords.Distance - sdist * Math.Cos(phi));
+
+            var angle = Math.Atan2(
+                Math.Cos(sunCoords.Declination) * Math.Sin(sunCoords.RightAscension - moonCoords.RightAscension),
+                Math.Sin(sunCoords.Declination) * Math.Cos(moonCoords.Declination) -
+                Math.Cos(sunCoords.Declination) * Math.Sin(moonCoords.Declination) *
+                Math.Cos(sunCoords.RightAscension - moonCoords.RightAscension));
+            
+            
+            var fraction = (1 + Math.Cos(inc)) / 2;
+            var phase = 0.5 + 0.5 * inc * (angle < 0 ? -1 : 1) / Math.PI;
+
+            return new MoonIllumination(fraction, phase, angle);
         }
     }
 }
