@@ -1,5 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Koste Budinoski</Authors>
+    <Company />
+    <PackageId>SunCalcNet</PackageId>
+    <RepositoryUrl>https://github.com/kostebudinoski/SunCalc-Net</RepositoryUrl>
+    <Description>A .NET port of the SunCalc JS lib for calculating sun/moon positions and phases.</Description>
+    <PackageProjectUrl>https://github.com/kostebudinoski/SunCalc-Net</PackageProjectUrl>
   </PropertyGroup>
 </Project>
