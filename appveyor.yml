@@ -15,7 +15,7 @@ artifacts:
   name: NuGet
 deploy:  
 - provider: NuGet
-  server: https://www.myget.org/F/kostebudinoski-ci/api/v3/index.json
+  server: https://www.myget.org/F/kostebudinoski-ci/api/v2/package
   api_key:
     secure: +nQ5sXVNk9VkDE9rTlZp+l0tClZXrq8eGt4jaaj4dUJA9v2K7ZHKJT4v5VZZjlsN
   skip_symbols: true
