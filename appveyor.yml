@@ -11,7 +11,7 @@ build_script:
 - ps: .\build.ps1
 test: off  
 artifacts:  
-- path: .\SunCalc\artifacts\**\*.nupkg
+- path: .\SunCalcNet\artifacts\**\*.nupkg
   name: NuGet
 deploy:  
 - provider: NuGet

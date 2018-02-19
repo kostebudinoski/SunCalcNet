@@ -1,10 +1,10 @@
-﻿using System;
+﻿using SunCalcNet.Internal;
+using SunCalcNet.Model;
+using SunCalcNet.Utils;
+using System;
 using System.Collections.Generic;
-using SunCalc.Internal;
-using SunCalc.Model;
-using SunCalc.Utils;
 
-namespace SunCalc
+namespace SunCalcNet
 {
     public static class SunCalc
     {
@@ -81,10 +81,10 @@ namespace SunCalc
             var jnoon = SunTime.GetSolarTransitJ(ds, m, l);
             var solarNoon = jnoon.FromJulian();
             var nadir = (jnoon - 0.5).FromJulian();
-            
+
             var sunPhaseCol = new List<SunPhase>
             {
-                new SunPhase(SunPhaseName.SolarNoon, solarNoon), 
+                new SunPhase(SunPhaseName.SolarNoon, solarNoon),
                 new SunPhase(SunPhaseName.Nadir, nadir)
             };
 
@@ -114,7 +114,7 @@ namespace SunCalc
             const int sdist = 149598000; // distance from Earth to Sun in km
             var sunCoords = Sun.GetEquatorialCoords(d);
             var moonCoords = Moon.GetGeocentricCoords(d);
-            
+
             var phi = Math.Acos(Math.Sin(sunCoords.Declination) * Math.Sin(moonCoords.Declination) +
                                 Math.Cos(sunCoords.Declination) * Math.Cos(moonCoords.Declination) *
                                 Math.Cos(sunCoords.RightAscension - moonCoords.RightAscension));
@@ -126,8 +126,7 @@ namespace SunCalc
                 Math.Sin(sunCoords.Declination) * Math.Cos(moonCoords.Declination) -
                 Math.Cos(sunCoords.Declination) * Math.Sin(moonCoords.Declination) *
                 Math.Cos(sunCoords.RightAscension - moonCoords.RightAscension));
-            
-            
+
             var fraction = (1 + Math.Cos(inc)) / 2;
             var phase = 0.5 + 0.5 * inc * (angle < 0 ? -1 : 1) / Math.PI;
 
@@ -148,7 +147,7 @@ namespace SunCalc
             double? rise = null;
             double? set = null;
             double ye = 0;
-            
+
             // go in 2-hour chunks,
             // each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
             for (var i = 1; i <= 24; i += 2)
@@ -226,7 +225,7 @@ namespace SunCalc
             {
                 return moonPhase;
             }
-            
+
             moonPhase.AlwaysUp = ye > 0;
             moonPhase.AlwaysDown = !moonPhase.AlwaysUp;
             return moonPhase;

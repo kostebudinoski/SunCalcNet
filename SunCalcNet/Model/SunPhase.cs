@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SunCalc.Model
+namespace SunCalcNet.Model
 {
     public class SunPhase
     {

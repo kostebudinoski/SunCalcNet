@@ -9,6 +9,6 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SunCalc\SunCalc.csproj" />
+    <ProjectReference Include="..\SunCalcNet\SunCalcNet.csproj" />
   </ItemGroup>
 </Project>

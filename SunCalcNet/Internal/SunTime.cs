@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace SunCalc.Internal
+namespace SunCalcNet.Internal
 {
-    public static class SunTime
+    internal static class SunTime
     {
         public static double GetJulianCycle(double d, double lw)
         {
@@ -20,15 +20,23 @@ namespace SunCalc.Internal
         }
 
         /// <summary>
-        /// returns set time for the given sun altitude
+        /// Returns set time for the given sun altitude
         /// </summary>
+        /// <param name="h"></param>
+        /// <param name="lw"></param>
+        /// <param name="phi"></param>
+        /// <param name="dec"></param>
+        /// <param name="n"></param>
+        /// <param name="m"></param>
+        /// <param name="l"></param>
+        /// <returns></returns>
         public static double GetSetJ(double h, double lw, double phi, double dec, double n, double m, double l)
         {
             var w = GetHourAngle(h, phi, dec);
             var a = GetApproxTransit(w, lw, n);
             return GetSolarTransitJ(a, m, l);
         }
-        
+
         private static double GetHourAngle(double h, double phi, double d)
         {
             return Math.Acos((Math.Sin(h) - Math.Sin(phi) * Math.Sin(d)) / (Math.Cos(phi) * Math.Cos(d)));

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SunCalc.Model
+namespace SunCalcNet.Model
 {
     public class SunPhaseName
     {
@@ -10,7 +10,7 @@ namespace SunCalc.Model
         }
 
         public string Value { get; }
-        
+
         public static SunPhaseName SolarNoon => new SunPhaseName("Solar Noon");
         public static SunPhaseName Nadir => new SunPhaseName("Nadir");
         public static SunPhaseName Sunrise => new SunPhaseName("Sunrise");
@@ -26,20 +26,20 @@ namespace SunCalc.Model
         public static SunPhaseName GoldenHourEnd => new SunPhaseName("Golden Hour End");
         public static SunPhaseName GoldenHour => new SunPhaseName("Golden Hour");
     }
-    
+
     public class SunPhaseAngle
     {
         public double Angle { get; }
         public SunPhaseName RiseName { get; }
         public SunPhaseName SetName { get; }
-        
+
         private SunPhaseAngle(double angle, SunPhaseName riseName, SunPhaseName setName)
         {
             Angle = angle;
             RiseName = riseName;
             SetName = setName;
         }
-        
+
         public static IEnumerable<SunPhaseAngle> GetAll()
         {
             return new List<SunPhaseAngle>

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SunCalc.Internal
+namespace SunCalcNet.Internal
 {
     internal static class Position
     {

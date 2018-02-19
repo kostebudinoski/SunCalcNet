@@ -1,7 +1,7 @@
-﻿using System;
-using SunCalc.Model;
+﻿using SunCalcNet.Model;
+using System;
 
-namespace SunCalc.Internal
+namespace SunCalcNet.Internal
 {
     internal static class Moon
     {
@@ -22,7 +22,7 @@ namespace SunCalc.Internal
 
             var ra = Position.GetRightAscension(longitude, latitude);
             var declination = Position.GetDeclination(longitude, latitude);
-            
+
             return new GeocentricCoords(ra, declination, dt);
         }
     }

@@ -36,6 +36,6 @@ echo "build: Build version suffix is $buildSuffix"
 
 exec { & dotnet build -c Release --version-suffix=$buildSuffix -v q /nologo }
 
-exec { & dotnet test .\SunCalc.Tests\SunCalc.Tests.csproj -c Release }
+exec { & dotnet test .\SunCalcNet.Tests\SunCalcNet.Tests.csproj -c Release }
 
-exec { & dotnet pack .\SunCalc\SunCalc.csproj -c Release -o .\artifacts --include-symbols $versionSuffix } 
+exec { & dotnet pack .\SunCalcNet\SunCalcNet.csproj -c Release -o .\artifacts --include-symbols $versionSuffix } 

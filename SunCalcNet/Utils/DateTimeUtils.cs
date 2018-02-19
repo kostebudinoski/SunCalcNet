@@ -1,7 +1,7 @@
-﻿using System;
-using SunCalc.Internal;
+﻿using SunCalcNet.Internal;
+using System;
 
-namespace SunCalc.Utils
+namespace SunCalcNet.Utils
 {
     internal static class DateTimeUtils
     {
@@ -22,7 +22,7 @@ namespace SunCalc.Utils
         {
             return date.AddHours(h);
         }
-        
+
         /// <summary>
         /// OADate is similar to Julian Dates, but uses a different starting point (December 30, 1899 vs. January 1, 4713 BC).
         /// The Julian Date of midnight, December 30, 1899 is 2415018.5.

@@ -1,7 +1,7 @@
-﻿using System;
-using SunCalc.Model;
+﻿using SunCalcNet.Model;
+using System;
 
-namespace SunCalc.Internal
+namespace SunCalcNet.Internal
 {
     internal static class Sun
     {
@@ -39,7 +39,7 @@ namespace SunCalc.Internal
 
             var dec = Position.GetDeclination(eclipticLongitude, 0);
             var ra = Position.GetRightAscension(eclipticLongitude, 0);
-            
+
             return new EquatorialCoords(ra, dec);
         }
     }
