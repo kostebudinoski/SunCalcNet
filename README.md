@@ -23,12 +23,12 @@ var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
 var lat = 50.5;
 var lng = 30.5;
 
-var sunPosition = SunCalc.GetMoonPosition(date, lat, lng);
+var moonPosition = SunCalc.GetMoonPosition(date, lat, lng);
 
-Assert.Equal(-0.9783999522438226, sunPosition.Azimuth, 15);
-Assert.Equal(0.0145514822438922, sunPosition.Altitude, 15);
-Assert.Equal(364121.37256256194, sunPosition.Distance, 15);
-Assert.Equal(-0.59832117604234014, sunPosition.ParallacticAngle, 15);
+Assert.Equal(-0.9783999522438226, moonPosition.Azimuth, 15);
+Assert.Equal(0.0145514822438922, moonPosition.Altitude, 15);
+Assert.Equal(364121.37256256194, moonPosition.Distance, 15);
+Assert.Equal(-0.59832117604234014, moonPosition.ParallacticAngle, 15);
 ```
 Get Sun phases
 ```csharp
