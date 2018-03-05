@@ -25,6 +25,11 @@ namespace SunCalcNet.Model
         public static SunPhaseName Night => new SunPhaseName("Night");
         public static SunPhaseName GoldenHourEnd => new SunPhaseName("Golden Hour End");
         public static SunPhaseName GoldenHour => new SunPhaseName("Golden Hour");
+
+        public override string ToString()
+        {
+            return Value;
+        }
     }
 
     public class SunPhaseAngle

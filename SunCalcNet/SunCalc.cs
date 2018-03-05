@@ -210,25 +210,26 @@ namespace SunCalcNet
                 h0 = h2;
             }
 
-            var moonPhase = new MoonPhase();
+            DateTime? riseDate = null;
+            DateTime? setDate = null;
+            
             if (rise.HasValue)
             {
-                moonPhase.Rise = date.HoursLater(rise.Value);
+                riseDate = date.HoursLater(rise.Value);
             }
 
             if (set.HasValue)
             {
-                moonPhase.Set = date.HoursLater(set.Value);
+                setDate = date.HoursLater(set.Value);
             }
 
             if (rise.HasValue || set.HasValue)
             {
-                return moonPhase;
+                return new MoonPhase(riseDate, setDate);
             }
 
-            moonPhase.AlwaysUp = ye > 0;
-            moonPhase.AlwaysDown = !moonPhase.AlwaysUp;
-            return moonPhase;
+            var alwaysUp = ye > 0;
+            return new MoonPhase(alwaysUp);
         }
     }
 }

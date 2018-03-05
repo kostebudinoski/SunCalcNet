@@ -1,6 +1,8 @@
-﻿namespace SunCalcNet.Model
+﻿using System;
+
+namespace SunCalcNet.Model
 {
-    public struct MoonPosition
+    public struct MoonPosition : IEquatable<MoonPosition>
     {
         /// <summary>
         /// Moon azimuth in radians
@@ -28,6 +30,35 @@
             Altitude = altitude;
             Distance = distance;
             ParallacticAngle = parallacticAngle;
+        }
+
+        public bool Equals(MoonPosition other)
+        {
+            return Azimuth.Equals(other.Azimuth)
+                   && Altitude.Equals(other.Altitude)
+                   && Distance.Equals(other.Distance)
+                   && ParallacticAngle.Equals(other.ParallacticAngle);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            return obj is MoonPosition position && Equals(position);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = Azimuth.GetHashCode();
+                hashCode = (hashCode * 397) ^ Altitude.GetHashCode();
+                hashCode = (hashCode * 397) ^ Distance.GetHashCode();
+                return (hashCode * 397) ^ ParallacticAngle.GetHashCode();
+            }
         }
     }
 }
