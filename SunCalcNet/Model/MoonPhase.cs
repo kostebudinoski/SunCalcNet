@@ -2,6 +2,7 @@
 
 namespace SunCalcNet.Model
 {
+    [Serializable]
     public struct MoonPhase : IEquatable<MoonPhase>
     {
         /// <summary>
@@ -40,22 +41,32 @@ namespace SunCalcNet.Model
             AlwaysDown = !alwaysUp;
         }
 
+        public static bool operator ==(MoonPhase lhs, MoonPhase rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(MoonPhase lhs, MoonPhase rhs)
+        {
+            return !(lhs == rhs);
+        }
+
         public bool Equals(MoonPhase other)
         {
-            return Rise.Equals(other.Rise)
-                   && Set.Equals(other.Set)
+            return Rise == other.Rise
+                   && Set == other.Set
                    && AlwaysUp == other.AlwaysUp
                    && AlwaysDown == other.AlwaysDown;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is MoonPhase phase)
             {
-                return false;
+                return Equals(phase);
             }
 
-            return obj is MoonPhase phase && Equals(phase);
+            return false;
         }
 
         public override int GetHashCode()

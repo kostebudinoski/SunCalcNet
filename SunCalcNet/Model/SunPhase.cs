@@ -2,6 +2,7 @@
 
 namespace SunCalcNet.Model
 {
+    [Serializable]
     public struct SunPhase : IEquatable<SunPhase>
     {
         /// <summary>
@@ -20,27 +21,37 @@ namespace SunCalcNet.Model
             PhaseTime = phaseTime;
         }
 
+        public static bool operator ==(SunPhase lhs, SunPhase rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(SunPhase lhs, SunPhase rhs)
+        {
+            return !(lhs == rhs);
+        }
+
         public bool Equals(SunPhase other)
         {
-            return Equals(Name, other.Name)
-                   && PhaseTime.Equals(other.PhaseTime);
+            return Name.Value == other.Name.Value
+                   && PhaseTime == other.PhaseTime;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is SunPhase phase)
             {
-                return false;
+                return Equals(phase);
             }
 
-            return obj is SunPhase phase && Equals(phase);
+            return false;
         }
 
         public override int GetHashCode()
         {
             unchecked
             {
-                return ((Name?.GetHashCode() ?? 0) * 397) ^ PhaseTime.GetHashCode();
+                return ((Name?.Value.GetHashCode() ?? 0) * 397) ^ PhaseTime.GetHashCode();
             }
         }
     }

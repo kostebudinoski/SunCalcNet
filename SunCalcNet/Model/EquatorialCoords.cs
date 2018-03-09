@@ -2,6 +2,7 @@
 
 namespace SunCalcNet.Model
 {
+    [Serializable]
     public struct EquatorialCoords : IEquatable<EquatorialCoords>
     {
         public double RightAscension { get; }
@@ -14,20 +15,30 @@ namespace SunCalcNet.Model
             Declination = declination;
         }
 
+        public static bool operator ==(EquatorialCoords lhs, EquatorialCoords rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(EquatorialCoords lhs, EquatorialCoords rhs)
+        {
+            return !(lhs == rhs);
+        }
+
         public bool Equals(EquatorialCoords other)
         {
-            return RightAscension.Equals(other.RightAscension)
-                   && Declination.Equals(other.Declination);
+            return RightAscension == other.RightAscension
+                   && Declination == other.Declination;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is EquatorialCoords coords)
             {
-                return false;
+                return Equals(coords);
             }
 
-            return obj is EquatorialCoords coords && Equals(coords);
+            return false;
         }
 
         public override int GetHashCode()

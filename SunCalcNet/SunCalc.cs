@@ -88,7 +88,7 @@ namespace SunCalcNet
                 new SunPhase(SunPhaseName.Nadir, nadir)
             };
 
-            foreach (var sunPhase in SunPhaseAngle.GetAll())
+            foreach (var sunPhase in SunPhaseAngle.List)
             {
                 var jset = SunTime.GetSetJ(sunPhase.Angle * Constants.Rad, lw, phi, dec, n, m, l);
                 var jrise = jnoon - (jset - jnoon);

@@ -2,6 +2,7 @@
 
 namespace SunCalcNet.Model
 {
+    [Serializable]
     public struct GeocentricCoords : IEquatable<GeocentricCoords>
     {
         public double RightAscension { get; }
@@ -17,21 +18,31 @@ namespace SunCalcNet.Model
             Distance = distance;
         }
 
+        public static bool operator ==(GeocentricCoords lhs, GeocentricCoords rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(GeocentricCoords lhs, GeocentricCoords rhs)
+        {
+            return !(lhs == rhs);
+        }
+
         public bool Equals(GeocentricCoords other)
         {
-            return RightAscension.Equals(other.RightAscension)
-                   && Declination.Equals(other.Declination)
-                   && Distance.Equals(other.Distance);
+            return RightAscension == other.RightAscension
+                   && Declination == other.Declination
+                   && Distance == other.Distance;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is GeocentricCoords coords)
             {
-                return false;
+                return Equals(coords);
             }
 
-            return obj is GeocentricCoords coords && Equals(coords);
+            return false;
         }
 
         public override int GetHashCode()

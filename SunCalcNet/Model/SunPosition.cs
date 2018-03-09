@@ -2,6 +2,7 @@
 
 namespace SunCalcNet.Model
 {
+    [Serializable]
     public struct SunPosition : IEquatable<SunPosition>
     {
         /// <summary>
@@ -22,20 +23,30 @@ namespace SunCalcNet.Model
             Altitude = altitude;
         }
 
+        public static bool operator ==(SunPosition lhs, SunPosition rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(SunPosition lhs, SunPosition rhs)
+        {
+            return !(lhs == rhs);
+        }
+
         public bool Equals(SunPosition other)
         {
-            return Azimuth.Equals(other.Azimuth)
-                   && Altitude.Equals(other.Altitude);
+            return Azimuth == other.Azimuth
+                   && Altitude == other.Altitude;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is SunPosition position)
             {
-                return false;
+                return Equals(position);
             }
 
-            return obj is SunPosition position && Equals(position);
+            return false;
         }
 
         public override int GetHashCode()

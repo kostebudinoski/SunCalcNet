@@ -2,6 +2,7 @@
 
 namespace SunCalcNet.Model
 {
+    [Serializable]
     public struct MoonIllumination : IEquatable<MoonIllumination>
     {
         public double Fraction { get; }
@@ -17,21 +18,31 @@ namespace SunCalcNet.Model
             Angle = angle;
         }
 
+        public static bool operator ==(MoonIllumination lhs, MoonIllumination rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(MoonIllumination lhs, MoonIllumination rhs)
+        {
+            return !(lhs == rhs);
+        }
+
         public bool Equals(MoonIllumination other)
         {
-            return Fraction.Equals(other.Fraction)
-                   && Phase.Equals(other.Phase)
-                   && Angle.Equals(other.Angle);
+            return Fraction == other.Fraction
+                   && Phase == other.Phase
+                   && Angle == other.Angle;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is MoonIllumination illumination )
             {
-                return false;
+                return Equals(illumination);
             }
 
-            return obj is MoonIllumination illumination && Equals(illumination);
+            return false;
         }
 
         public override int GetHashCode()

@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace SunCalcNet.Model
 {
+    [Serializable]
     public class SunPhaseName
     {
         private SunPhaseName(string value)
@@ -32,10 +34,13 @@ namespace SunCalcNet.Model
         }
     }
 
+    [Serializable]
     public class SunPhaseAngle
     {
         public double Angle { get; }
+
         public SunPhaseName RiseName { get; }
+
         public SunPhaseName SetName { get; }
 
         private SunPhaseAngle(double angle, SunPhaseName riseName, SunPhaseName setName)
@@ -45,17 +50,14 @@ namespace SunCalcNet.Model
             SetName = setName;
         }
 
-        public static IEnumerable<SunPhaseAngle> GetAll()
+        public static IEnumerable<SunPhaseAngle> List => new List<SunPhaseAngle>
         {
-            return new List<SunPhaseAngle>
-            {
-                new SunPhaseAngle(-0.833, SunPhaseName.Sunrise, SunPhaseName.Sunset),
-                new SunPhaseAngle(-0.3, SunPhaseName.SunriseEnd, SunPhaseName.SunsetStart),
-                new SunPhaseAngle(-6, SunPhaseName.Dawn, SunPhaseName.Dusk),
-                new SunPhaseAngle(-12, SunPhaseName.NauticalDawn, SunPhaseName.NauticalDusk),
-                new SunPhaseAngle(-18, SunPhaseName.NightEnd, SunPhaseName.Night),
-                new SunPhaseAngle(6, SunPhaseName.GoldenHourEnd, SunPhaseName.GoldenHour)
-            };
-        }
+            new SunPhaseAngle(-0.833, SunPhaseName.Sunrise, SunPhaseName.Sunset),
+            new SunPhaseAngle(-0.3, SunPhaseName.SunriseEnd, SunPhaseName.SunsetStart),
+            new SunPhaseAngle(-6, SunPhaseName.Dawn, SunPhaseName.Dusk),
+            new SunPhaseAngle(-12, SunPhaseName.NauticalDawn, SunPhaseName.NauticalDusk),
+            new SunPhaseAngle(-18, SunPhaseName.NightEnd, SunPhaseName.Night),
+            new SunPhaseAngle(6, SunPhaseName.GoldenHourEnd, SunPhaseName.GoldenHour)
+        };
     }
 }

@@ -2,6 +2,7 @@
 
 namespace SunCalcNet.Model
 {
+    [Serializable]
     public struct MoonPosition : IEquatable<MoonPosition>
     {
         /// <summary>
@@ -32,22 +33,32 @@ namespace SunCalcNet.Model
             ParallacticAngle = parallacticAngle;
         }
 
+        public static bool operator ==(MoonPosition lhs, MoonPosition rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(MoonPosition lhs, MoonPosition rhs)
+        {
+            return !(lhs == rhs);
+        }
+
         public bool Equals(MoonPosition other)
         {
-            return Azimuth.Equals(other.Azimuth)
-                   && Altitude.Equals(other.Altitude)
-                   && Distance.Equals(other.Distance)
-                   && ParallacticAngle.Equals(other.ParallacticAngle);
+            return Azimuth == other.Azimuth
+                   && Altitude == other.Altitude
+                   && Distance == other.Distance
+                   && ParallacticAngle == other.ParallacticAngle;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is MoonPosition position)
             {
-                return false;
+                return Equals(position);
             }
 
-            return obj is MoonPosition position && Equals(position);
+            return false;
         }
 
         public override int GetHashCode()
