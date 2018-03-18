@@ -51,7 +51,7 @@ namespace SunCalcNet.Model
         {
             unchecked
             {
-                return ((Name?.Value.GetHashCode() ?? 0) * 397) ^ PhaseTime.GetHashCode();
+                return (Name.Value.GetHashCode() * 397) ^ PhaseTime.GetHashCode();
             }
         }
     }

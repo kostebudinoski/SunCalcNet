@@ -22,9 +22,8 @@ namespace SunCalcNet.Internal
         /// <returns></returns>
         public static double GetEclipticLongitude(double m)
         {
-            // equation of center
-            var center = Constants.Rad * (1.9148 * Math.Sin(m) + 0.02 * Math.Sin(2 * m) + 0.0003 * Math.Sin(3 * m));
-            return m + center + Constants.EarthPerihelion + Math.PI;
+            var equationOfCenter = GetEquationOfCenter(m);
+            return m + equationOfCenter + Constants.EarthPerihelion + Math.PI;
         }
 
         /// <summary>
@@ -41,6 +40,11 @@ namespace SunCalcNet.Internal
             var ra = Position.GetRightAscension(eclipticLongitude, 0);
 
             return new EquatorialCoords(ra, dec);
+        }
+        
+        private static double GetEquationOfCenter(double m)
+        {
+            return Constants.Rad * (1.9148 * Math.Sin(m) + 0.02 * Math.Sin(2 * m) + 0.0003 * Math.Sin(3 * m));
         }
     }
 }
