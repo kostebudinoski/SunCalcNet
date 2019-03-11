@@ -83,6 +83,22 @@ namespace SunCalcNet.Tests
         }
 
         [Fact]
+        public void Get_Sun_Phases_Works_At_North_Pole()
+        {
+            //Arrange
+            var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+            var lat = 90;
+            var lng = 135;
+
+            //Act
+            var sunPhases = SunCalc.GetSunPhases(date, lat, lng).ToList();
+
+            //Assert
+            Assert.NotNull(sunPhases[0]);
+            Assert.NotNull(sunPhases[1]);
+        }
+
+        [Fact]
         public void Get_Moon_Illumination_Returns_Fraction_And_Angle_Of_Moons_Illuminated_Limb_And_Phase()
         {
             //Arrange

@@ -3,7 +3,7 @@
 namespace SunCalcNet.Model
 {
     [Serializable]
-    public struct SunPhase : IEquatable<SunPhase>
+    public class SunPhase : IEquatable<SunPhase>
     {
         /// <summary>
         /// Sun phase name.

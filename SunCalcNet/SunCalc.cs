@@ -91,10 +91,18 @@ namespace SunCalcNet
             foreach (var sunPhase in SunPhaseAngle.List)
             {
                 var jset = SunTime.GetSetJ(sunPhase.Angle * Constants.Rad, lw, phi, dec, n, m, l);
-                var jrise = jnoon - (jset - jnoon);
 
-                sunPhaseCol.Add(new SunPhase(sunPhase.RiseName, jrise.FromJulian()));
-                sunPhaseCol.Add(new SunPhase(sunPhase.SetName, jset.FromJulian()));
+                if (!double.IsNaN(jset))
+                {
+                    var jrise = jnoon - (jset - jnoon);
+                    sunPhaseCol.Add(new SunPhase(sunPhase.RiseName, jrise.FromJulian()));
+                    sunPhaseCol.Add(new SunPhase(sunPhase.SetName, jset.FromJulian()));
+                }
+                else
+                {
+                    sunPhaseCol.Add(null);
+                    sunPhaseCol.Add(null);
+                }
             }
 
             return sunPhaseCol;
