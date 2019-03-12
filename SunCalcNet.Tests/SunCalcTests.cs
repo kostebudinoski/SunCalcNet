@@ -94,8 +94,7 @@ namespace SunCalcNet.Tests
             var sunPhases = SunCalc.GetSunPhases(date, lat, lng).ToList();
 
             //Assert
-            Assert.NotNull(sunPhases[0]);
-            Assert.NotNull(sunPhases[1]);
+            Assert.Equal(2, sunPhases.Count);
         }
 
         [Fact]
