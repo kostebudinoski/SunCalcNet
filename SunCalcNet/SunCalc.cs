@@ -217,7 +217,7 @@ namespace SunCalcNet
 
             DateTime? riseDate = null;
             DateTime? setDate = null;
-            
+
             if (rise.HasValue)
             {
                 riseDate = date.HoursLater(rise.Value);

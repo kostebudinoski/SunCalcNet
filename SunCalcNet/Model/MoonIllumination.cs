@@ -37,7 +37,7 @@ namespace SunCalcNet.Model
 
         public override bool Equals(object obj)
         {
-            if (obj is MoonIllumination illumination )
+            if (obj is MoonIllumination illumination)
             {
                 return Equals(illumination);
             }

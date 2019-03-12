@@ -41,7 +41,7 @@ namespace SunCalcNet.Internal
 
             return new EquatorialCoords(ra, dec);
         }
-        
+
         private static double GetEquationOfCenter(double m)
         {
             return Constants.Rad * (1.9148 * Math.Sin(m) + 0.02 * Math.Sin(2 * m) + 0.0003 * Math.Sin(3 * m));
