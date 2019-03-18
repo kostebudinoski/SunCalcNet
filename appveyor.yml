@@ -17,14 +17,14 @@ deploy:
 - provider: NuGet
   server: https://www.myget.org/F/kostebudinoski-ci/api/v2/package
   api_key:
-    secure: +nQ5sXVNk9VkDE9rTlZp+l0tClZXrq8eGt4jaaj4dUJA9v2K7ZHKJT4v5VZZjlsN
+    secure: fXZCsxdXuK3OvklUqVceCa3x++sbFYV33Bl7mxz8+4eF08f7oE0JOQQRRkf5IfHy
   skip_symbols: true
   on:
     branch: master
 - provider: NuGet
   name: production
   api_key:
-    secure: Qh73/DEtMeZBCTdu350ZW8K/TY1qad0COeOQVoaN3Mkm3QLleRTn0MFAddq6sRTV
+    secure: JW+gjN+IwUTNO75C6lrBPjN5hyCyiJ7D0/G6bkRJhY9Zq2Wg7J1Vy9JnoZ9DICUX
   on:
     branch: master
     appveyor_repo_tag: true
