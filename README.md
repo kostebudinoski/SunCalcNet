@@ -23,7 +23,7 @@ var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
 var lat = 50.5;
 var lng = 30.5;
 
-var moonPosition = SunCalc.GetMoonPosition(date, lat, lng);
+var moonPosition = MoonCalc.GetMoonPosition(date, lat, lng);
 
 Assert.Equal(-0.9783999522438226, moonPosition.Azimuth, 15);
 Assert.Equal(0.0145514822438922, moonPosition.Altitude, 15);
@@ -47,7 +47,7 @@ Get Moon Illumination
 ```csharp
 var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
 
-var moonIllum = SunCalc.GetMoonIllumination(date);
+var moonIllum = MoonCalc.GetMoonIllumination(date);
 
 Assert.Equal(0.4848068202456373, moonIllum.Fraction, 15);
 Assert.Equal(0.7548368838538762, moonIllum.Phase, 15);
