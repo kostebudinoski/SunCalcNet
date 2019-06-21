@@ -3,6 +3,8 @@ solution: SunCalcNet.sln
 dotnet: 2.2.202
 mono: none
 dist: xenial
+install:
+  - export FrameworkPathOverride=$(dirname $(which mono))/../lib/mono/4.6.1-api
 branches:  
   only:
     - master
