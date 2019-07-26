@@ -3,6 +3,14 @@ SunCalc-Net
 
 A .NET port of the [SunCalc JS lib](https://github.com/mourner/suncalc) for calculating sun/moon positions and phases.
 
+Getting Started
+============
+
+The best way to get started is to:
+
+- Add a Nuget dependency to [SunCalcNet](https://www.nuget.org/packages/SunCalcNet/).
+- Use SunCalc and MoonCalc class methods. 
+
 Usage example
 ==========
 
