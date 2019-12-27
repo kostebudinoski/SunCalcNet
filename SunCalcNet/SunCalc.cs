@@ -31,16 +31,21 @@ namespace SunCalcNet
         }
 
         /// <summary>
-        /// Calculates phases of the sun for a single day and latitude/longitude.
+        /// Calculates phases of the sun for a single day and latitude/longitude
+        /// and optionally the observer height (in meters) relative to the horizon
         /// </summary>
         /// <param name="date"></param>
         /// <param name="lat"></param>
         /// <param name="lng"></param>
+        /// <param name="height"></param>
         /// <returns></returns>
-        public static IEnumerable<SunPhase> GetSunPhases(DateTime date, double lat, double lng)
+        public static IEnumerable<SunPhase> GetSunPhases(DateTime date, double lat, double lng, double height = 0)
         {
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
+
+            var dh = SunTime.GetObserverAngle(height);
+            
             var d = date.ToDays();
 
             var n = SunTime.GetJulianCycle(d, lw);
@@ -62,7 +67,8 @@ namespace SunCalcNet
 
             foreach (var sunPhase in SunPhaseAngle.List)
             {
-                var jset = SunTime.GetSetJ(sunPhase.Angle * Constants.Rad, lw, phi, dec, n, m, l);
+                var h0 = (sunPhase.Angle + dh) * Constants.Rad;
+                var jset = SunTime.GetSetJ(h0, lw, phi, dec, n, m, l);
 
                 if (double.IsNaN(jset) || double.IsInfinity(jset))
                 {

@@ -36,6 +36,11 @@ namespace SunCalcNet.Internal
             var a = GetApproxTransit(w, lw, n);
             return GetSolarTransitJ(a, m, l);
         }
+        
+        public static double GetObserverAngle(double height)
+        {
+            return -2.076 * Math.Sqrt(height) / 60;
+        }
 
         private static double GetHourAngle(double h, double phi, double d)
         {
