@@ -13,14 +13,14 @@ namespace SunCalcNet.Utils
             return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((j + 0.5 - Constants.J1970) * DayMs);
         }
 
-        public static double ToDays(this DateTime date)
+        public static double ToDays(this DateTimeOffset date)
         {
             return ToJulianDate(date) - Constants.J2000;
         }
 
-        public static DateTime HoursLater(this DateTime date, double h)
+        public static DateTimeOffset HoursLater(this DateTimeOffset date, double hours)
         {
-            return date.AddHours(h);
+            return date.AddHours(hours);
         }
 
         /// <summary>
@@ -29,9 +29,9 @@ namespace SunCalcNet.Utils
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        private static double ToJulianDate(this DateTime date)
+        private static double ToJulianDate(this DateTimeOffset date)
         {
-            return date.ToOADate() + J1899;
+            return date.UtcDateTime.ToOADate() + J1899;
         }
     }
 }
