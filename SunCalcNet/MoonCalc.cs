@@ -75,7 +75,7 @@ namespace SunCalcNet
         /// <param name="date"></param>
         /// <param name="lat"></param>
         /// <param name="lng"></param>
-        public static MoonPhase GetMoonPhase(DateTime date, double lat, double lng)
+        public static MoonPhase GetMoonPhase(DateTimeOffset date, double lat, double lng)
         {
             DateTimeOffset dateTimeOffset = date;
             dateTimeOffset = dateTimeOffset.Add(-dateTimeOffset.TimeOfDay);
