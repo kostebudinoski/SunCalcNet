@@ -64,7 +64,7 @@ namespace SunCalcNet.Tests
         public void Get_Moon_Times_Time_Specified_Returns_MoonRise_And_Set_Times()
         {
             //Arrange
-            var date = new DateTime(2020, 5, 13, 12, 16, 0);
+            var date = new DateTime(2020, 5, 13, 10, 16, 0, DateTimeKind.Utc);
             var lat = 48.2026;
             var lng = 16.3684;
 
@@ -72,12 +72,10 @@ namespace SunCalcNet.Tests
             var moonPhase = MoonCalc.GetMoonPhase(date, lat, lng);
             
             //Assert
-            Assert.NotNull(moonPhase.Rise);
+            Assert.Null(moonPhase.Rise);
             Assert.NotNull(moonPhase.Set);
-            var rise = moonPhase.Rise.Value.ToString("yyyy-MM-dd hh:mm:ss");
             var set = moonPhase.Set.Value.ToString("yyyy-MM-dd hh:mm:ss");
-            Assert.Equal("2020-05-13 01:41:10", rise);
-            Assert.Equal("2020-05-13 10:37:56", set);
+            Assert.Equal("2020-05-13 08:37:56", set);
             Assert.False(moonPhase.AlwaysDown);
             Assert.False(moonPhase.AlwaysUp);
         }
