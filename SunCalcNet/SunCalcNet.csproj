@@ -10,7 +10,7 @@
     <RepositoryType>git</RepositoryType>
     <Description>A .NET port of the SunCalc JS lib for calculating sun/moon positions and phases.</Description>
     <PackageProjectUrl>https://github.com/kostebudinoski/SunCalc-Net</PackageProjectUrl>
-    <Version>1.1.3</Version>
+    <Version>1.1.4</Version>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="artifacts\**" />
