@@ -15,7 +15,7 @@ namespace SunCalcNet
         /// <param name="lat"></param>
         /// <param name="lng"></param>
         /// <returns></returns>
-        public static SunPosition GetSunPosition(DateTimeOffset date, double lat, double lng)
+        public static SunPosition GetSunPosition(DateTime date, double lat, double lng)
         {
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
@@ -39,7 +39,7 @@ namespace SunCalcNet
         /// <param name="lng"></param>
         /// <param name="height"></param>
         /// <returns></returns>
-        public static IEnumerable<SunPhase> GetSunPhases(DateTimeOffset date, double lat, double lng, double height = 0)
+        public static IEnumerable<SunPhase> GetSunPhases(DateTime date, double lat, double lng, double height = 0)
         {
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;

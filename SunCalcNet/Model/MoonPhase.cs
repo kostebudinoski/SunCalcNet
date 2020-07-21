@@ -8,12 +8,12 @@ namespace SunCalcNet.Model
         /// <summary>
         /// Moonrise time as Date
         /// </summary>
-        public DateTimeOffset? Rise { get; }
+        public DateTime? Rise { get; }
 
         /// <summary>
         /// Moonset time as Date
         /// </summary>
-        public DateTimeOffset? Set { get; }
+        public DateTime? Set { get; }
 
         /// <summary>
         /// True if the moon never rises/sets and is always above the horizon during the day
@@ -25,20 +25,26 @@ namespace SunCalcNet.Model
         /// </summary>
         public bool AlwaysDown { get; }
 
-        public MoonPhase(DateTimeOffset? rise, DateTimeOffset? set)
+        public MoonPhase(DateTime? rise, DateTime? set, double ye)
         {
             Rise = rise;
             Set = set;
             AlwaysUp = false;
             AlwaysDown = false;
-        }
 
-        public MoonPhase(bool alwaysUp)
-        {
-            Rise = null;
-            Set = null;
-            AlwaysUp = alwaysUp;
-            AlwaysDown = !alwaysUp;
+            if (rise.HasValue || set.HasValue)
+            {
+                return;
+            }
+            
+            if (ye > 0)
+            {
+                AlwaysUp = true;
+            }
+            else
+            {
+                AlwaysDown = true;
+            }
         }
 
         public static bool operator ==(MoonPhase lhs, MoonPhase rhs)

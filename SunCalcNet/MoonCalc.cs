@@ -14,7 +14,7 @@ namespace SunCalcNet
         /// <param name="lat"></param>
         /// <param name="lng"></param>
         /// <returns></returns>
-        public static MoonPosition GetMoonPosition(DateTimeOffset date, double lat, double lng)
+        public static MoonPosition GetMoonPosition(DateTime date, double lat, double lng)
         {
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
@@ -28,7 +28,7 @@ namespace SunCalcNet
             var pa = Math.Atan2(Math.Sin(h), Math.Tan(phi) * Math.Cos(moonCoords.Declination) - Math.Sin(moonCoords.Declination) * Math.Cos(h));
 
             // altitude correction for refraction
-            hAltitude = hAltitude + Position.GetAstroRefraction(hAltitude);
+            hAltitude += Position.GetAstroRefraction(hAltitude);
 
             var azimuth = Position.GetAzimuth(h, phi, moonCoords.Declination);
 
@@ -43,7 +43,7 @@ namespace SunCalcNet
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        public static MoonIllumination GetMoonIllumination(DateTimeOffset date)
+        public static MoonIllumination GetMoonIllumination(DateTime date)
         {
             var d = date.ToDays();
             const int sdist = 149598000; // distance from Earth to Sun in km
@@ -75,13 +75,12 @@ namespace SunCalcNet
         /// <param name="date"></param>
         /// <param name="lat"></param>
         /// <param name="lng"></param>
-        public static MoonPhase GetMoonPhase(DateTimeOffset date, double lat, double lng)
+        public static MoonPhase GetMoonPhase(DateTime date, double lat, double lng)
         {
-            DateTimeOffset dateTimeOffset = date;
-            dateTimeOffset = dateTimeOffset.Add(-dateTimeOffset.TimeOfDay);
+            date = date.Add(-date.TimeOfDay);
             
             const double hc = 0.133 * Constants.Rad;
-            var h0 = GetMoonPosition(dateTimeOffset, lat, lng).Altitude - hc;
+            var h0 = GetMoonPosition(date, lat, lng).Altitude - hc;
             double? rise = null;
             double? set = null;
             double ye = 0;
@@ -90,8 +89,8 @@ namespace SunCalcNet
             // each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
             for (var i = 1; i <= 24; i += 2)
             {
-                var h1 = GetMoonPosition(dateTimeOffset.HoursLater(i), lat, lng).Altitude - hc;
-                var h2 = GetMoonPosition(dateTimeOffset.HoursLater(i + 1), lat, lng).Altitude - hc;
+                var h1 = GetMoonPosition(date.HoursLater(i), lat, lng).Altitude - hc;
+                var h2 = GetMoonPosition(date.HoursLater(i + 1), lat, lng).Altitude - hc;
 
                 var a = (h0 + h2) / 2 - h1;
                 var b = (h2 - h0) / 2;
@@ -147,27 +146,12 @@ namespace SunCalcNet
 
                 h0 = h2;
             }
-
-            DateTimeOffset? riseDate = null;
-            DateTimeOffset? setDate = null;
-
-            if (rise.HasValue)
-            {
-                riseDate = dateTimeOffset.HoursLater(rise.Value);
-            }
-
-            if (set.HasValue)
-            {
-                setDate = dateTimeOffset.HoursLater(set.Value);
-            }
-
-            if (rise.HasValue || set.HasValue)
-            {
-                return new MoonPhase(riseDate, setDate);
-            }
-
-            var alwaysUp = ye > 0;
-            return new MoonPhase(alwaysUp);
+            
+            return new MoonPhase(
+                rise.HasValue ? date.HoursLater(rise.Value) : (DateTime?) null,
+                set.HasValue ? date.HoursLater(set.Value) : (DateTime?) null,
+                ye
+            );
         }
     }
 }
