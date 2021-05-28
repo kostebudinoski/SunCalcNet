@@ -1,6 +1,8 @@
 SunCalc-Net
 ============
 
+[![build](https://github.com/kostebudinoski/SunCalcNet/actions/workflows/master_build.yml/badge.svg)](https://github.com/kostebudinoski/SunCalcNet/actions/workflows/master_build.yml)
+
 A .NET port of the [SunCalc JS lib](https://github.com/mourner/suncalc) for calculating sun/moon positions and phases.
 
 Getting Started
