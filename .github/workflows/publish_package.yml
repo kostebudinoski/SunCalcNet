@@ -1,0 +1,58 @@
+name: Publish Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      semver:
+        description: Increment version(s) by semver keyword - (major, minor, patch, premajor, preminor, prepatch, prerelease)
+        required: true
+        
+env:
+  # Stop wasting time caching packages
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  # Disable sending usage data to Microsoft
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+        
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.201
+
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+      
+    - name: Test
+      run: dotnet test --no-build --verbosity normal --configuration Release
+      
+    - name: Build NuGet
+      run: dotnet pack -c Release -o out --version-suffix ${{ github.event.inputs.semver }} SunCalcNet/SunCalcNet.csproj
+
+    - name: Create Tag
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          github.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: "refs/tags/${{ github.event.inputs.semver }}",
+            sha: context.sha
+          })
+    
+    - name: Deploy NuGet Binaries
+      run: dotnet nuget push "out/SunCalcNet.${{ github.event.inputs.semver }}.nupkg" -k ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/kbudinoski/index.json
+      
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: nupkg
+        path: out/SunCalcNet.${{ github.event.inputs.semver }}.nupkg
