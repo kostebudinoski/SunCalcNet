@@ -5,12 +5,11 @@ namespace SunCalcNet.Utils
 {
     internal static class DateTimeUtils
     {
-        private const int DayMs = 1000 * 60 * 60 * 24;
-        private const double J1899 = 2415018.5;
+        
 
         public static DateTime FromJulian(this double j)
         {
-            return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((j + 0.5 - Constants.J1970) * DayMs);
+            return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((j + 0.5 - Constants.J1970) * Constants.DayMs);
         }
 
         public static double ToDays(this DateTime date)
@@ -31,7 +30,15 @@ namespace SunCalcNet.Utils
         /// <returns></returns>
         private static double ToJulianDate(this DateTime date)
         {
-            return date.ToUniversalTime().ToOADate() + J1899;
+            return date.ToUniversalTime().ToOADate() + Constants.J1899;
+        }
+    }
+
+    internal static class DateTimeOffsetUtils
+    {
+        public static DateTimeOffset FromJulian(this double j, TimeSpan offset)
+        {
+            return new DateTimeOffset(1970, 1, 1, 0, 0, 0, offset).AddMilliseconds((j + 0.5 - Constants.J1970) * Constants.DayMs);
         }
     }
 }

@@ -15,6 +15,18 @@ namespace SunCalcNet
         /// <param name="lat"></param>
         /// <param name="lng"></param>
         /// <returns></returns>
+        public static SunPosition GetSunPosition(DateTimeOffset date, double lat, double lng)
+        {
+            return GetSunPosition(date.UtcDateTime, lat, lng);
+        }
+
+        /// <summary>
+        /// Calculates sun position for a given date and latitude/longitude.
+        /// </summary>
+        /// <param name="date"></param>
+        /// <param name="lat"></param>
+        /// <param name="lng"></param>
+        /// <returns></returns>
         public static SunPosition GetSunPosition(DateTime date, double lat, double lng)
         {
             var lw = Constants.Rad * -lng;
@@ -39,14 +51,54 @@ namespace SunCalcNet
         /// <param name="lng"></param>
         /// <param name="height"></param>
         /// <returns></returns>
+        public static IEnumerable<SunPhase> GetSunPhases(DateTimeOffset date, double lat, double lng, double height = 0)
+        {
+            var phasesDictionary = GetSunPhasesInternal(date.UtcDateTime.ToDays(), lat, lng, height);
+            var sunPhaseWithOffset = new List<SunPhase>();
+            foreach (var phase in phasesDictionary)
+            {
+                sunPhaseWithOffset.Add(new SunPhase(phase.Key, phase.Value.FromJulian(date.Offset)));
+            }
+            return sunPhaseWithOffset;
+        }
+
+        /// <summary>
+        /// Calculates phases of the sun for a single day and latitude/longitude
+        /// and optionally the observer height (in meters) relative to the horizon
+        /// </summary>
+        /// <param name="date"></param>
+        /// <param name="lat"></param>
+        /// <param name="lng"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
         public static IEnumerable<SunPhase> GetSunPhases(DateTime date, double lat, double lng, double height = 0)
+        {
+            var phasesDictionary = GetSunPhasesInternal(date.ToDays(), lat, lng, height);
+            var sunPhaseCol = new List<SunPhase>();
+            foreach(var phase in phasesDictionary)
+            {
+                sunPhaseCol.Add(new SunPhase(phase.Key, phase.Value.FromJulian()));
+            }
+            return sunPhaseCol;
+        }
+
+        /// <summary>
+        /// Calculates phases of the sun for a single day and latitude/longitude
+        /// and optionally the observer height (in meters) relative to the horizon
+        /// </summary>
+        /// <param name="days"></param>
+        /// <param name="lat"></param>
+        /// <param name="lng"></param>
+        /// <param name="height"></param>
+        /// <returns>A dictionary with phase name, and julian time</returns>
+        private static Dictionary<SunPhaseName, double> GetSunPhasesInternal(double days, double lat, double lng, double height)
         {
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
 
             var dh = SunTime.GetObserverAngle(height);
-            
-            var d = date.ToDays();
+
+            var d = days;
 
             var n = SunTime.GetJulianCycle(d, lw);
             var ds = SunTime.GetApproxTransit(0, lw, n);
@@ -56,13 +108,13 @@ namespace SunCalcNet
             var dec = Position.GetDeclination(l, 0);
 
             var jnoon = SunTime.GetSolarTransitJ(ds, m, l);
-            var solarNoon = jnoon.FromJulian();
-            var nadir = (jnoon - 0.5).FromJulian();
+            var solarNoon = jnoon;
+            var nadir = (jnoon - 0.5);
 
-            var sunPhaseCol = new List<SunPhase>
+            var phasesDictionary = new Dictionary<SunPhaseName, double>
             {
-                new SunPhase(SunPhaseName.SolarNoon, solarNoon),
-                new SunPhase(SunPhaseName.Nadir, nadir)
+                [SunPhaseName.SolarNoon] = solarNoon,
+                [SunPhaseName.Nadir] = nadir
             };
 
             foreach (var sunPhase in SunPhaseAngle.List)
@@ -76,11 +128,12 @@ namespace SunCalcNet
                 }
 
                 var jrise = jnoon - (jset - jnoon);
-                sunPhaseCol.Add(new SunPhase(sunPhase.RiseName, jrise.FromJulian()));
-                sunPhaseCol.Add(new SunPhase(sunPhase.SetName, jset.FromJulian()));
+                phasesDictionary.Add(sunPhase.RiseName, jrise);
+                phasesDictionary.Add(sunPhase.SetName, jset);
             }
 
-            return sunPhaseCol;
+            return phasesDictionary;
+
         }
     }
 }

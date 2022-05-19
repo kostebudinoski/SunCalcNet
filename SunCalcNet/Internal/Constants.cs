@@ -15,5 +15,9 @@ namespace SunCalcNet.Internal
         public const double J1970 = 2440588;
 
         public const double J2000 = 2451545;
+
+        public const int DayMs = 1000 * 60 * 60 * 24;
+
+        public const double J1899 = 2415018.5;
     }
 }

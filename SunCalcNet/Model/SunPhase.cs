@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace SunCalcNet.Model
 {
@@ -15,10 +16,27 @@ namespace SunCalcNet.Model
         /// </summary>
         public DateTime PhaseTime { get; }
 
+        public DateTimeOffset PhaseTimeOffset { get; }
+
         public SunPhase(SunPhaseName name, DateTime phaseTime)
         {
             Name = name;
             PhaseTime = phaseTime;
+            PhaseTimeOffset = phaseTime;
+        }
+
+        public SunPhase(SunPhaseName name, DateTimeOffset phaseTimeOffset): this(name, phaseTimeOffset.UtcDateTime)
+        {
+            PhaseTimeOffset = phaseTimeOffset;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = 799229037;
+            hashCode = (hashCode * -1521134295) + EqualityComparer<SunPhaseName>.Default.GetHashCode(Name);
+            hashCode = (hashCode * -1521134295) + PhaseTime.GetHashCode();
+            hashCode = (hashCode * -1521134295) + PhaseTimeOffset.GetHashCode();
+            return hashCode;
         }
 
         public static bool operator ==(SunPhase lhs, SunPhase rhs)
@@ -34,25 +52,10 @@ namespace SunCalcNet.Model
         public bool Equals(SunPhase other)
         {
             return Name.Value == other.Name.Value
-                   && PhaseTime == other.PhaseTime;
+                   && PhaseTime == other.PhaseTime
+                   && PhaseTimeOffset == other.PhaseTimeOffset;
         }
 
-        public override bool Equals(object obj)
-        {
-            if (obj is SunPhase phase)
-            {
-                return Equals(phase);
-            }
-
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (Name.Value.GetHashCode() * 397) ^ PhaseTime.GetHashCode();
-            }
-        }
+        public override bool Equals(object obj) => obj is SunPhase phase && Equals(phase);
     }
 }
