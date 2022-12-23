@@ -8,10 +8,10 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
   
-  - package-ecosystem: nuget
+  - package-ecosystem: "nuget"
     directory: "/"
     schedule:
-      interval: daily
+      interval: "daily"
     open-pull-requests-limit: 25
