@@ -52,7 +52,7 @@ jobs:
       run: dotnet nuget push "out/SunCalcNet.${{ github.event.inputs.semver }}.nupkg" -k ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/kbudinoski/index.json
       
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: nupkg
         path: out/SunCalcNet.${{ github.event.inputs.semver }}.nupkg
