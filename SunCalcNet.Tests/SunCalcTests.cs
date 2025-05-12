@@ -56,7 +56,7 @@ namespace SunCalcNet.Tests
             //Assert
             foreach (var testSunPhase in testData)
             {
-                var sunPhaseValue = sunPhases.First(x => x.Name.Value == testSunPhase.Name.Value);
+                var sunPhaseValue = sunPhases.First(x => x.Name == testSunPhase.Name);
 
                 var testDataPhaseTime = testSunPhase.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
                 var sunPhaseTime = sunPhaseValue.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
@@ -102,7 +102,7 @@ namespace SunCalcNet.Tests
             //Assert
             foreach (var testSunPhase in heightTestData)
             {
-                var sunPhaseValue = sunPhases.First(x => x.Name.Value == testSunPhase.Name.Value);
+                var sunPhaseValue = sunPhases.First(x => x.Name == testSunPhase.Name);
 
                 var testDataPhaseTime = testSunPhase.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
                 var sunPhaseTime = sunPhaseValue.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");

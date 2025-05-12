@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace SunCalcNet.Model
 {
     [Serializable]
-    public class SunPhaseName
-    {
+    public class SunPhaseName : IEquatable<SunPhaseName>
+	{
         private SunPhaseName(string value)
         {
             Value = value;
@@ -31,6 +31,31 @@ namespace SunCalcNet.Model
         public override string ToString()
         {
             return Value;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is SunPhaseName other && Equals(other);
+        }
+
+        public bool Equals(SunPhaseName other)
+        {
+            return other != null && Value == other.Value;
+        }
+
+        public override int GetHashCode()
+        {
+            return Value.GetHashCode();
+        }
+
+        public static bool operator ==(SunPhaseName left, SunPhaseName right)
+        {
+            return left is null ? right is null : left.Equals(right);
+        }
+
+        public static bool operator !=(SunPhaseName left, SunPhaseName right)
+        {
+            return !(left == right);
         }
     }
 
