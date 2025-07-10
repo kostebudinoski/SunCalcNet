@@ -4,32 +4,32 @@ namespace SunCalcNet.Internal
 {
     internal static class Position
     {
-        public static double GetRightAscension(double longitude, double b)
+        internal static double GetRightAscension(double longitude, double b)
         {
             return Math.Atan2(Math.Sin(longitude) * Math.Cos(Constants.EarthObliquity) - Math.Tan(b) * Math.Sin(Constants.EarthObliquity), Math.Cos(longitude));
         }
 
-        public static double GetDeclination(double longitude, double b)
+        internal static double GetDeclination(double longitude, double b)
         {
             return Math.Asin(Math.Sin(b) * Math.Cos(Constants.EarthObliquity) + Math.Cos(b) * Math.Sin(Constants.EarthObliquity) * Math.Sin(longitude));
         }
 
-        public static double GetAzimuth(double h, double phi, double dec)
+        internal static double GetAzimuth(double h, double phi, double dec)
         {
             return Math.Atan2(Math.Sin(h), Math.Cos(h) * Math.Sin(phi) - Math.Tan(dec) * Math.Cos(phi));
         }
 
-        public static double GetAltitude(double h, double phi, double dec)
+        internal static double GetAltitude(double h, double phi, double dec)
         {
             return Math.Asin(Math.Sin(phi) * Math.Sin(dec) + Math.Cos(phi) * Math.Cos(dec) * Math.Cos(h));
         }
 
-        public static double GetSiderealTime(double d, double lw)
+        internal static double GetSiderealTime(double d, double lw)
         {
             return Constants.Rad * (280.16 + 360.9856235 * d) - lw;
         }
 
-        public static double GetAstroRefraction(double h)
+        internal static double GetAstroRefraction(double h)
         {
             if (h < 0) // the following formula works for positive altitudes only.
             {

@@ -10,7 +10,7 @@ namespace SunCalcNet.Internal
         /// </summary>
         /// <param name="days"> Julian Day Number</param>
         /// <returns></returns>
-        public static double GetMeanAnomaly(double days)
+        internal static double GetMeanAnomaly(double days)
         {
             return Constants.Rad * (357.5291 + 0.98560028 * days);
         }
@@ -20,7 +20,7 @@ namespace SunCalcNet.Internal
         /// </summary>
         /// <param name="m"></param>
         /// <returns></returns>
-        public static double GetEclipticLongitude(double m)
+        internal static double GetEclipticLongitude(double m)
         {
             var equationOfCenter = GetEquationOfCenter(m);
             return m + equationOfCenter + Constants.EarthPerihelion + Math.PI;
@@ -31,7 +31,7 @@ namespace SunCalcNet.Internal
         /// </summary>
         /// <param name="days"></param>
         /// <returns></returns>
-        public static EquatorialCoords GetEquatorialCoords(double days)
+        internal static EquatorialCoords GetEquatorialCoords(double days)
         {
             var meanAnomaly = GetMeanAnomaly(days);
             var eclipticLongitude = GetEclipticLongitude(meanAnomaly);
