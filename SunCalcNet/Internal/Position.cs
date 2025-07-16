@@ -2,43 +2,98 @@
 
 namespace SunCalcNet.Internal
 {
+    /// <summary>
+    /// Provides methods for astronomical position calculations.
+    /// </summary>
     internal static class Position
     {
-        internal static double GetRightAscension(double longitude, double b)
+        private const double RefractionCoefficient = 0.0002967;
+        private const double RefractionInnerNumerator = 0.00312536;
+        private const double RefractionDenominatorOffset = 0.08901179;
+        
+        private const double SiderealBase = 280.16;
+        private const double SiderealCoefficient = 360.9856235;
+        
+        /// <summary>
+        /// Calculates the right ascension for the given celestial coordinates.
+        /// </summary>
+        /// <param name="longitude">The celestial longitude in radians.</param>
+        /// <param name="latitude">The celestial latitude in radians.</param>
+        /// <returns>The right ascension in radians.</returns>
+        internal static double GetRightAscension(double longitude, double latitude)
         {
-            return Math.Atan2(Math.Sin(longitude) * Math.Cos(Constants.EarthObliquity) - Math.Tan(b) * Math.Sin(Constants.EarthObliquity), Math.Cos(longitude));
+            return Math.Atan2(
+                Math.Sin(longitude) * Math.Cos(Constants.EarthObliquity) - 
+                Math.Tan(latitude) * Math.Sin(Constants.EarthObliquity), 
+                Math.Cos(longitude));
+        }
+        
+        /// <summary>
+        /// Calculates the declination for the given celestial coordinates.
+        /// </summary>
+        /// <param name="longitude">The celestial longitude in radians.</param>
+        /// <param name="latitude">The celestial latitude in radians.</param>
+        /// <returns>The declination in radians.</returns>
+        internal static double GetDeclination(double longitude, double latitude)
+        {
+            return Math.Asin(
+                Math.Sin(latitude) * Math.Cos(Constants.EarthObliquity) + 
+                Math.Cos(latitude) * Math.Sin(Constants.EarthObliquity) * Math.Sin(longitude));
+        }
+        
+        /// <summary>
+        /// Calculates the azimuth angle.
+        /// </summary>
+        /// <param name="hourAngle">The hour angle in radians.</param>
+        /// <param name="latitude">The observer's latitude in radians.</param>
+        /// <param name="declination">The declination in radians.</param>
+        /// <returns>The azimuth angle in radians.</returns>
+        internal static double GetAzimuth(double hourAngle, double latitude, double declination)
+        {
+            return Math.Atan2(
+                Math.Sin(hourAngle),
+                Math.Cos(hourAngle) * Math.Sin(latitude) - Math.Tan(declination) * Math.Cos(latitude));
+        }
+        
+        /// <summary>
+        /// Calculates the altitude of a celestial body.
+        /// </summary>
+        /// <param name="hourAngle">The hour angle in radians.</param>
+        /// <param name="latitude">The observer's latitude in radians.</param>
+        /// <param name="declination">The declination in radians.</param>
+        /// <returns>The altitude in radians.</returns>
+        internal static double GetAltitude(double hourAngle, double latitude, double declination)
+        {
+            return Math.Asin(
+                Math.Sin(latitude) * Math.Sin(declination) + 
+                Math.Cos(latitude) * Math.Cos(declination) * Math.Cos(hourAngle));
+        }
+        
+        /// <summary>
+        /// Calculates the local sidereal time.
+        /// </summary>
+        /// <param name="julianDay">The julian day.</param>
+        /// <param name="longitudeWest">The longitude west in radians.</param>
+        /// <returns>The local sidereal time in radians.</returns>
+        internal static double GetSiderealTime(double julianDay, double longitudeWest)
+        {
+            return Constants.Rad * (SiderealBase + SiderealCoefficient * julianDay) - longitudeWest;
         }
 
-        internal static double GetDeclination(double longitude, double b)
+        /// <summary>
+        /// Calculates the atmospheric refraction correction.
+        /// </summary>
+        /// <param name="altitude">The altitude in radians.</param>
+        /// <returns>The refraction correction in radians.</returns>
+        internal static double GetAstroRefraction(double altitude)
         {
-            return Math.Asin(Math.Sin(b) * Math.Cos(Constants.EarthObliquity) + Math.Cos(b) * Math.Sin(Constants.EarthObliquity) * Math.Sin(longitude));
-        }
-
-        internal static double GetAzimuth(double h, double phi, double dec)
-        {
-            return Math.Atan2(Math.Sin(h), Math.Cos(h) * Math.Sin(phi) - Math.Tan(dec) * Math.Cos(phi));
-        }
-
-        internal static double GetAltitude(double h, double phi, double dec)
-        {
-            return Math.Asin(Math.Sin(phi) * Math.Sin(dec) + Math.Cos(phi) * Math.Cos(dec) * Math.Cos(h));
-        }
-
-        internal static double GetSiderealTime(double d, double lw)
-        {
-            return Constants.Rad * (280.16 + 360.9856235 * d) - lw;
-        }
-
-        internal static double GetAstroRefraction(double h)
-        {
-            if (h < 0) // the following formula works for positive altitudes only.
+            // Formula 16.4 of "Astronomical Algorithms" 2nd edition by Jean Meeus
+            if (altitude < 0) // The formula works for positive altitudes only
             {
-                h = 0; // if h = -0.08901179 a div/0 would occur.
+                altitude = 0; // Prevent division by zero when altitude is -0.08901179
             }
 
-            // formula 16.4 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
-            // 1.02 / tan(h + 10.26 / (h + 5.10)) h in degrees, result in arc minutes -> converted to rad:
-            return 0.0002967 / Math.Tan(h + 0.00312536 / (h + 0.08901179));
+            return RefractionCoefficient / Math.Tan(altitude + RefractionInnerNumerator / (altitude + RefractionDenominatorOffset));
         }
     }
 }
