@@ -16,7 +16,7 @@ namespace SunCalcNet.Model
             new(6, SunPhaseName.GoldenHourEnd, SunPhaseName.GoldenHour)
         };
 
-        private static readonly IEnumerable<SunPhaseAngle> ReadOnlyValues = Array.AsReadOnly(Values);
+        private static readonly IReadOnlyCollection<SunPhaseAngle> ReadOnlyValues = Array.AsReadOnly(Values);
 
         public double Angle { get; }
 
@@ -38,6 +38,6 @@ namespace SunCalcNet.Model
             return Values[index];
         }
 
-        public static IEnumerable<SunPhaseAngle> List => ReadOnlyValues;
+        public static IReadOnlyCollection<SunPhaseAngle> List => ReadOnlyValues;
     }
 }
