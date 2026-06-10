@@ -67,7 +67,7 @@ namespace SunCalcNet
 
             for (var i = 0; i < SunPhaseAngle.Count; i++)
             {
-                 var sunPhase = SunPhaseAngle.GetAt(i);
+                var sunPhase = SunPhaseAngle.GetAt(i);
                 var h0 = (sunPhase.Angle + dh) * Constants.Rad;
                 var jset = SunTime.GetSetJ(h0, lw, phi, dec, n, m, l);
 
