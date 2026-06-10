@@ -59,14 +59,15 @@ namespace SunCalcNet
             var solarNoon = jnoon.FromJulian();
             var nadir = (jnoon - 0.5).FromJulian();
 
-            var sunPhaseCol = new List<SunPhase>
+            var sunPhaseCol = new List<SunPhase>(2 + SunPhaseAngle.Count * 2)
             {
                 new(SunPhaseName.SolarNoon, solarNoon),
                 new(SunPhaseName.Nadir, nadir)
             };
 
-            foreach (var sunPhase in SunPhaseAngle.List)
+            for (var i = 0; i < SunPhaseAngle.Count; i++)
             {
+                 var sunPhase = SunPhaseAngle.GetAt(i);
                 var h0 = (sunPhase.Angle + dh) * Constants.Rad;
                 var jset = SunTime.GetSetJ(h0, lw, phi, dec, n, m, l);
 
