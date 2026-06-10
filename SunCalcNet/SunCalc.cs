@@ -61,8 +61,8 @@ namespace SunCalcNet
 
             var sunPhaseCol = new List<SunPhase>
             {
-                new SunPhase(SunPhaseName.SolarNoon, solarNoon),
-                new SunPhase(SunPhaseName.Nadir, nadir)
+                new(SunPhaseName.SolarNoon, solarNoon),
+                new(SunPhaseName.Nadir, nadir)
             };
 
             foreach (var sunPhase in SunPhaseAngle.List)
