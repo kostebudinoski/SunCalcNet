@@ -10,10 +10,10 @@ namespace SunCalcNet
         /// <summary>
         /// Calculates moon position for a given date and latitude/longitude.
         /// </summary>
-        /// <param name="date"></param>
-        /// <param name="lat"></param>
-        /// <param name="lng"></param>
-        /// <returns></returns>
+        /// <param name="date">The date and time to calculate the moon position for.</param>
+        /// <param name="lat">The observer latitude in degrees.</param>
+        /// <param name="lng">The observer longitude in degrees.</param>
+        /// <returns>The moon position for the given date and location.</returns>
         public static MoonPosition GetMoonPosition(DateTime date, double lat, double lng)
         {
             var lw = Constants.Rad * -lng;
