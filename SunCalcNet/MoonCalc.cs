@@ -18,17 +18,10 @@ namespace SunCalcNet
         {
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
-            var d = date.ToDays();
-
-            var moonCoords = Moon.GetGeocentricCoords(d);
-            var h = Position.GetSiderealTime(d, lw) - moonCoords.RightAscension;
-            var hAltitude = Position.GetAltitude(h, phi, moonCoords.Declination);
+            var hAltitude = GetMoonAltitude(date, phi, lw, out var moonCoords, out var h);
 
             // formula 14.1 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
             var pa = Math.Atan2(Math.Sin(h), Math.Tan(phi) * Math.Cos(moonCoords.Declination) - Math.Sin(moonCoords.Declination) * Math.Cos(h));
-
-            // altitude correction for refraction
-            hAltitude += Position.GetAstroRefraction(hAltitude);
 
             var azimuth = Position.GetAzimuth(h, phi, moonCoords.Declination);
 
@@ -158,9 +151,14 @@ namespace SunCalcNet
 
         private static double GetMoonAltitude(DateTime date, double phi, double lw)
         {
+            return GetMoonAltitude(date, phi, lw, out _, out _);
+        }
+
+        private static double GetMoonAltitude(DateTime date, double phi, double lw, out GeocentricCoords moonCoords, out double h)
+        {
             var d = date.ToDays();
-            var moonCoords = Moon.GetGeocentricCoords(d);
-            var h = Position.GetSiderealTime(d, lw) - moonCoords.RightAscension;
+            moonCoords = Moon.GetGeocentricCoords(d);
+            h = Position.GetSiderealTime(d, lw) - moonCoords.RightAscension;
             var altitude = Position.GetAltitude(h, phi, moonCoords.Declination);
 
             return altitude + Position.GetAstroRefraction(altitude);
