@@ -1,5 +1,8 @@
+using System;
+
 namespace SunCalcNet.Model
 {
+    [Serializable]
     internal readonly struct MoonAltitudeResult
     {
         public MoonAltitudeResult(double apparentAltitude, GeocentricCoords moonCoords, double hourAngle)
