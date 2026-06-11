@@ -36,8 +36,8 @@ namespace SunCalcNet
         /// Based on http://idlastro.gsfc.nasa.gov/ftp/pro/astro/mphase.pro formulas and
         /// Chapter 48 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
         /// </summary>
-        /// <param name="date"></param>
-        /// <returns></returns>
+        /// <param name="date">The date and time to calculate moon illumination for.</param>
+        /// <returns>The moon illumination parameters for the given date.</returns>
         public static MoonIllumination GetMoonIllumination(DateTime date)
         {
             var d = date.ToDays();
@@ -67,9 +67,9 @@ namespace SunCalcNet
         /// Calculates phases of the moon for a single day and latitude/longitude.
         /// Calculations for moon rise/set times are based on http://www.stargazing.net/kepler/moonrise.html article.
         /// </summary>
-        /// <param name="date"></param>
-        /// <param name="lat"></param>
-        /// <param name="lng"></param>
+        /// <param name="date">The date to calculate moon rise and set times for.</param>
+        /// <param name="lat">The observer latitude in degrees.</param>
+        /// <param name="lng">The observer longitude in degrees.</param>
         public static MoonPhase GetMoonPhase(DateTime date, double lat, double lng)
         {
             date = date.Add(-date.TimeOfDay);
