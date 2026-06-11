@@ -18,7 +18,7 @@ namespace SunCalcNet
         {
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
-            var hAltitude = GetMoonAltitude(date, phi, lw, out var moonCoords, out var h);
+            var hAltitude = GetMoonAltitude(date, lw, phi, out var moonCoords, out var h);
 
             // formula 14.1 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
             var pa = Math.Atan2(Math.Sin(h), Math.Tan(phi) * Math.Cos(moonCoords.Declination) - Math.Sin(moonCoords.Declination) * Math.Cos(h));
@@ -75,7 +75,7 @@ namespace SunCalcNet
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
             const double hc = 0.133 * Constants.Rad;
-            var h0 = GetMoonAltitude(date, phi, lw) - hc;
+            var h0 = GetMoonAltitude(date, lw, phi) - hc;
             double? rise = null;
             double? set = null;
             double ye = 0;
@@ -84,8 +84,8 @@ namespace SunCalcNet
             // each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
             for (var i = 1; i <= 24; i += 2)
             {
-                var h1 = GetMoonAltitude(date.HoursLater(i), phi, lw) - hc;
-                var h2 = GetMoonAltitude(date.HoursLater(i + 1), phi, lw) - hc;
+                var h1 = GetMoonAltitude(date.HoursLater(i), lw, phi) - hc;
+                var h2 = GetMoonAltitude(date.HoursLater(i + 1), lw, phi) - hc;
 
                 var a = (h0 + h2) / 2 - h1;
                 var b = (h2 - h0) / 2;
@@ -149,12 +149,12 @@ namespace SunCalcNet
             );
         }
 
-        private static double GetMoonAltitude(DateTime date, double phi, double lw)
+        private static double GetMoonAltitude(DateTime date, double lw, double phi)
         {
-            return GetMoonAltitude(date, phi, lw, out _, out _);
+            return GetMoonAltitude(date, lw, phi, out _, out _);
         }
 
-        private static double GetMoonAltitude(DateTime date, double phi, double lw, out GeocentricCoords moonCoords, out double h)
+        private static double GetMoonAltitude(DateTime date, double lw, double phi, out GeocentricCoords moonCoords, out double h)
         {
             var d = date.ToDays();
             moonCoords = Moon.GetGeocentricCoords(d);
