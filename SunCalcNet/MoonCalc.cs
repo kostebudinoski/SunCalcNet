@@ -10,29 +10,24 @@ namespace SunCalcNet
         /// <summary>
         /// Calculates moon position for a given date and latitude/longitude.
         /// </summary>
-        /// <param name="date"></param>
-        /// <param name="lat"></param>
-        /// <param name="lng"></param>
-        /// <returns></returns>
+        /// <param name="date">The date and time to calculate the moon position for.</param>
+        /// <param name="lat">The observer latitude in degrees.</param>
+        /// <param name="lng">The observer longitude in degrees.</param>
+        /// <returns>The moon position for the given date and location.</returns>
         public static MoonPosition GetMoonPosition(DateTime date, double lat, double lng)
         {
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
-            var d = date.ToDays();
-
-            var moonCoords = Moon.GetGeocentricCoords(d);
-            var h = Position.GetSiderealTime(d, lw) - moonCoords.RightAscension;
-            var hAltitude = Position.GetAltitude(h, phi, moonCoords.Declination);
+            var moonPositionCalculation = GetMoonPositionCalculation(date, lw, phi);
+            var moonCoords = moonPositionCalculation.MoonCoords;
+            var h = moonPositionCalculation.HourAngle;
 
             // formula 14.1 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
             var pa = Math.Atan2(Math.Sin(h), Math.Tan(phi) * Math.Cos(moonCoords.Declination) - Math.Sin(moonCoords.Declination) * Math.Cos(h));
 
-            // altitude correction for refraction
-            hAltitude += Position.GetAstroRefraction(hAltitude);
-
             var azimuth = Position.GetAzimuth(h, phi, moonCoords.Declination);
 
-            return new MoonPosition(azimuth, hAltitude, moonCoords.Distance, pa);
+            return new MoonPosition(azimuth, moonPositionCalculation.ApparentAltitude, moonCoords.Distance, pa);
         }
 
         /// <summary>
@@ -41,8 +36,8 @@ namespace SunCalcNet
         /// Based on http://idlastro.gsfc.nasa.gov/ftp/pro/astro/mphase.pro formulas and
         /// Chapter 48 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
         /// </summary>
-        /// <param name="date"></param>
-        /// <returns></returns>
+        /// <param name="date">The date and time to calculate moon illumination for.</param>
+        /// <returns>The moon illumination parameters for the given date.</returns>
         public static MoonIllumination GetMoonIllumination(DateTime date)
         {
             var d = date.ToDays();
@@ -72,15 +67,17 @@ namespace SunCalcNet
         /// Calculates phases of the moon for a single day and latitude/longitude.
         /// Calculations for moon rise/set times are based on http://www.stargazing.net/kepler/moonrise.html article.
         /// </summary>
-        /// <param name="date"></param>
-        /// <param name="lat"></param>
-        /// <param name="lng"></param>
+        /// <param name="date">The date to calculate moon rise and set times for.</param>
+        /// <param name="lat">The observer latitude in degrees.</param>
+        /// <param name="lng">The observer longitude in degrees.</param>
         public static MoonPhase GetMoonPhase(DateTime date, double lat, double lng)
         {
             date = date.Add(-date.TimeOfDay);
-            
+
+            var lw = Constants.Rad * -lng;
+            var phi = Constants.Rad * lat;
             const double hc = 0.133 * Constants.Rad;
-            var h0 = GetMoonPosition(date, lat, lng).Altitude - hc;
+            var h0 = GetMoonPositionCalculation(date, lw, phi).ApparentAltitude - hc;
             double? rise = null;
             double? set = null;
             double ye = 0;
@@ -89,8 +86,8 @@ namespace SunCalcNet
             // each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
             for (var i = 1; i <= 24; i += 2)
             {
-                var h1 = GetMoonPosition(date.HoursLater(i), lat, lng).Altitude - hc;
-                var h2 = GetMoonPosition(date.HoursLater(i + 1), lat, lng).Altitude - hc;
+                var h1 = GetMoonPositionCalculation(date.HoursLater(i), lw, phi).ApparentAltitude - hc;
+                var h2 = GetMoonPositionCalculation(date.HoursLater(i + 1), lw, phi).ApparentAltitude - hc;
 
                 var a = (h0 + h2) / 2 - h1;
                 var b = (h2 - h0) / 2;
@@ -152,6 +149,19 @@ namespace SunCalcNet
                 set.HasValue ? date.HoursLater(set.Value) : (DateTime?) null,
                 ye
             );
+        }
+
+        private static MoonPositionCalculation GetMoonPositionCalculation(DateTime date, double lw, double phi)
+        {
+            var d = date.ToDays();
+            var moonCoords = Moon.GetGeocentricCoords(d);
+            var h = Position.GetSiderealTime(d, lw) - moonCoords.RightAscension;
+            var geometricAltitude = Position.GetAltitude(h, phi, moonCoords.Declination);
+
+            return new MoonPositionCalculation(
+                geometricAltitude + Position.GetAstroRefraction(geometricAltitude),
+                moonCoords,
+                h);
         }
     }
 }
