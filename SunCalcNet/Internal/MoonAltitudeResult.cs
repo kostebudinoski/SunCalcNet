@@ -1,6 +1,7 @@
 using System;
+using SunCalcNet.Model;
 
-namespace SunCalcNet.Model
+namespace SunCalcNet.Internal
 {
     [Serializable]
     internal readonly struct MoonAltitudeResult : IEquatable<MoonAltitudeResult>
