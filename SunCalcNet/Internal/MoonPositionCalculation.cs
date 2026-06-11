@@ -4,9 +4,9 @@ using SunCalcNet.Model;
 namespace SunCalcNet.Internal
 {
     [Serializable]
-    internal readonly struct MoonAltitudeResult : IEquatable<MoonAltitudeResult>
+    internal readonly struct MoonPositionCalculation : IEquatable<MoonPositionCalculation>
     {
-        public MoonAltitudeResult(double apparentAltitude, GeocentricCoords moonCoords, double hourAngle)
+        public MoonPositionCalculation(double apparentAltitude, GeocentricCoords moonCoords, double hourAngle)
         {
             ApparentAltitude = apparentAltitude;
             MoonCoords = moonCoords;
@@ -19,17 +19,17 @@ namespace SunCalcNet.Internal
 
         public double HourAngle { get; }
 
-        public static bool operator ==(MoonAltitudeResult lhs, MoonAltitudeResult rhs)
+        public static bool operator ==(MoonPositionCalculation lhs, MoonPositionCalculation rhs)
         {
             return lhs.Equals(rhs);
         }
 
-        public static bool operator !=(MoonAltitudeResult lhs, MoonAltitudeResult rhs)
+        public static bool operator !=(MoonPositionCalculation lhs, MoonPositionCalculation rhs)
         {
             return !(lhs == rhs);
         }
 
-        public bool Equals(MoonAltitudeResult other)
+        public bool Equals(MoonPositionCalculation other)
         {
             return ApparentAltitude == other.ApparentAltitude
                    && MoonCoords == other.MoonCoords
@@ -38,9 +38,9 @@ namespace SunCalcNet.Internal
 
         public override bool Equals(object obj)
         {
-            if (obj is MoonAltitudeResult result)
+            if (obj is MoonPositionCalculation calculation)
             {
-                return Equals(result);
+                return Equals(calculation);
             }
 
             return false;
