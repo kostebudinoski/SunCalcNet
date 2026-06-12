@@ -8,11 +8,11 @@ namespace SunCalcNet.Internal
         /// <summary>
         /// The position that the planet would have relative to its perihelion if the orbit of the planet were a circle is called the mean anomaly.
         /// </summary>
-        /// <param name="days"> Julian Day Number</param>
+        /// <param name="daysSinceJ2000">Days since J2000.0 (January 1, 2000 12:00 UTC).</param>
         /// <returns></returns>
-        internal static double GetMeanAnomaly(double days)
+        internal static double GetMeanAnomaly(double daysSinceJ2000)
         {
-            return Constants.Rad * (357.5291 + 0.98560028 * days);
+            return Constants.Rad * (357.5291 + 0.98560028 * daysSinceJ2000);
         }
 
         /// <summary>
@@ -29,11 +29,11 @@ namespace SunCalcNet.Internal
         /// <summary>
         /// Get Sun coordinates.
         /// </summary>
-        /// <param name="days"></param>
+        /// <param name="daysSinceJ2000">Days since J2000.0 (January 1, 2000 12:00 UTC).</param>
         /// <returns></returns>
-        internal static EquatorialCoords GetEquatorialCoords(double days)
+        internal static EquatorialCoords GetEquatorialCoords(double daysSinceJ2000)
         {
-            var meanAnomaly = GetMeanAnomaly(days);
+            var meanAnomaly = GetMeanAnomaly(daysSinceJ2000);
             var eclipticLongitude = GetEclipticLongitude(meanAnomaly);
 
             var dec = Position.GetDeclination(eclipticLongitude, 0);

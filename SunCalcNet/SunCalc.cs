@@ -19,10 +19,10 @@ namespace SunCalcNet
         {
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
-            var d = date.ToDays();
+            var daysSinceJ2000 = date.ToDaysSinceJ2000();
 
-            var sunCoords = Sun.GetEquatorialCoords(d);
-            var h = Position.GetSiderealTime(d, lw) - sunCoords.RightAscension;
+            var sunCoords = Sun.GetEquatorialCoords(daysSinceJ2000);
+            var h = Position.GetSiderealTime(daysSinceJ2000, lw) - sunCoords.RightAscension;
 
             var azimuth = Position.GetAzimuth(h, phi, sunCoords.Declination);
             var altitude = Position.GetAltitude(h, phi, sunCoords.Declination);
@@ -46,16 +46,16 @@ namespace SunCalcNet
 
             var dh = SunTime.GetObserverAngle(height);
             
-            var d = date.ToDays();
+            var daysSinceJ2000 = date.ToDaysSinceJ2000();
 
-            var n = SunTime.GetJulianCycle(d, lw);
-            var ds = SunTime.GetApproxTransit(0, lw, n);
+            var n = SunTime.GetJulianCycle(daysSinceJ2000, lw);
+            var approxTransitDaysSinceJ2000 = SunTime.GetApproxTransit(0, lw, n);
 
-            var m = Sun.GetMeanAnomaly(ds);
+            var m = Sun.GetMeanAnomaly(approxTransitDaysSinceJ2000);
             var l = Sun.GetEclipticLongitude(m);
             var dec = Position.GetDeclination(l, 0);
 
-            var jnoon = SunTime.GetSolarTransitJ(ds, m, l);
+            var jnoon = SunTime.GetSolarTransitJ(approxTransitDaysSinceJ2000, m, l);
             var solarNoon = jnoon.FromJulian();
             var nadir = (jnoon - 0.5).FromJulian();
 

@@ -13,7 +13,7 @@ namespace SunCalcNet.Utils
             return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((j + 0.5 - Constants.J1970) * DayMs);
         }
 
-        public static double ToDays(this DateTime date)
+        public static double ToDaysSinceJ2000(this DateTime date)
         {
             return ToJulianDate(date) - Constants.J2000;
         }

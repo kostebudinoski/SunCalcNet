@@ -40,10 +40,10 @@ namespace SunCalcNet
         /// <returns>The moon illumination parameters for the given date.</returns>
         public static MoonIllumination GetMoonIllumination(DateTime date)
         {
-            var d = date.ToDays();
+            var daysSinceJ2000 = date.ToDaysSinceJ2000();
             const int sdist = 149598000; // distance from Earth to Sun in km
-            var sunCoords = Sun.GetEquatorialCoords(d);
-            var moonCoords = Moon.GetGeocentricCoords(d);
+            var sunCoords = Sun.GetEquatorialCoords(daysSinceJ2000);
+            var moonCoords = Moon.GetGeocentricCoords(daysSinceJ2000);
 
             var phi = Math.Acos(Math.Sin(sunCoords.Declination) * Math.Sin(moonCoords.Declination) +
                                 Math.Cos(sunCoords.Declination) * Math.Cos(moonCoords.Declination) *
@@ -77,7 +77,8 @@ namespace SunCalcNet
             var lw = Constants.Rad * -lng;
             var phi = Constants.Rad * lat;
             const double hc = 0.133 * Constants.Rad;
-            var h0 = GetMoonPositionCalculation(date, lw, phi).ApparentAltitude - hc;
+            var daysSinceJ2000 = date.ToDaysSinceJ2000();
+            var h0 = GetMoonPositionCalculation(daysSinceJ2000, lw, phi).ApparentAltitude - hc;
             double? rise = null;
             double? set = null;
             double ye = 0;
@@ -153,9 +154,13 @@ namespace SunCalcNet
 
         private static MoonPositionCalculation GetMoonPositionCalculation(DateTime date, double lw, double phi)
         {
-            var d = date.ToDays();
-            var moonCoords = Moon.GetGeocentricCoords(d);
-            var h = Position.GetSiderealTime(d, lw) - moonCoords.RightAscension;
+            return GetMoonPositionCalculation(date.ToDaysSinceJ2000(), lw, phi);
+        }
+
+        private static MoonPositionCalculation GetMoonPositionCalculation(double daysSinceJ2000, double lw, double phi)
+        {
+            var moonCoords = Moon.GetGeocentricCoords(daysSinceJ2000);
+            var h = Position.GetSiderealTime(daysSinceJ2000, lw) - moonCoords.RightAscension;
             var geometricAltitude = Position.GetAltitude(h, phi, moonCoords.Declination);
 
             return new MoonPositionCalculation(
