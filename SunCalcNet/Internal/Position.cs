@@ -72,12 +72,12 @@ namespace SunCalcNet.Internal
         /// <summary>
         /// Calculates the local sidereal time.
         /// </summary>
-        /// <param name="julianDay">The julian day.</param>
+        /// <param name="daysSinceJ2000">Days since J2000.0 (January 1, 2000 12:00 UTC).</param>
         /// <param name="longitudeWest">The longitude west in radians.</param>
         /// <returns>The local sidereal time in radians.</returns>
-        internal static double GetSiderealTime(double julianDay, double longitudeWest)
+        internal static double GetSiderealTime(double daysSinceJ2000, double longitudeWest)
         {
-            return Constants.Rad * (SiderealBase + SiderealCoefficient * julianDay) - longitudeWest;
+            return Constants.Rad * (SiderealBase + SiderealCoefficient * daysSinceJ2000) - longitudeWest;
         }
 
         /// <summary>

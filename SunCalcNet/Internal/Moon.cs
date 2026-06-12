@@ -20,13 +20,13 @@ namespace SunCalcNet.Internal
         /// <summary>
         /// Get Moon geocentric coordinates based on days since J2000.0 epoch
         /// </summary>
-        /// <param name="days">Days since J2000.0 (January 1, 2000 12:00 UTC)</param>
+        /// <param name="daysSinceJ2000">Days since J2000.0 (January 1, 2000 12:00 UTC)</param>
         /// <returns>Geocentric coordinates of the Moon</returns>
-        internal static GeocentricCoords GetGeocentricCoords(double days)
+        internal static GeocentricCoords GetGeocentricCoords(double daysSinceJ2000)
         {
-            var eclipticLongitude = Constants.Rad * (LongitudeBase + LongitudeRate * days);
-            var meanAnomaly = Constants.Rad * (MeanAnomalyBase + MeanAnomalyRate * days);
-            var meanDistance = Constants.Rad * (MeanDistanceBase + MeanDistanceRate * days);
+            var eclipticLongitude = Constants.Rad * (LongitudeBase + LongitudeRate * daysSinceJ2000);
+            var meanAnomaly = Constants.Rad * (MeanAnomalyBase + MeanAnomalyRate * daysSinceJ2000);
+            var meanDistance = Constants.Rad * (MeanDistanceBase + MeanDistanceRate * daysSinceJ2000);
 
 
             var longitude = eclipticLongitude + Constants.Rad * LongitudePerturbation * Math.Sin(meanAnomaly);
