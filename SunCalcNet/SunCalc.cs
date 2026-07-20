@@ -4,84 +4,87 @@ using SunCalcNet.Utils;
 using System;
 using System.Collections.Generic;
 
-namespace SunCalcNet
+namespace SunCalcNet;
+
+public static class SunCalc
 {
-    public static class SunCalc
+    /// <summary>
+    /// Calculates sun position for a given date and latitude/longitude.
+    /// </summary>
+    /// <param name="date"></param>
+    /// <param name="lat"></param>
+    /// <param name="lng"></param>
+    /// <returns></returns>
+    public static SunPosition GetSunPosition(DateTime date, double lat, double lng)
     {
-        /// <summary>
-        /// Calculates sun position for a given date and latitude/longitude.
-        /// </summary>
-        /// <param name="date"></param>
-        /// <param name="lat"></param>
-        /// <param name="lng"></param>
-        /// <returns></returns>
-        public static SunPosition GetSunPosition(DateTime date, double lat, double lng)
+        var lw = Constants.Rad * -lng;
+        var phi = Constants.Rad * lat;
+        var daysSinceJ2000 = date.ToDaysSinceJ2000();
+
+        // position series run on Terrestrial Time; sidereal time stays on UT
+        var sunCoords = Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(daysSinceJ2000));
+        var h = Position.GetSiderealTime(daysSinceJ2000, lw) - sunCoords.RightAscension;
+
+        var azimuth = Position.GetAzimuth(h, phi, sunCoords.Declination);
+        var altitude = Position.GetAltitude(h, phi, sunCoords.Declination);
+
+        // apparent (refraction-corrected) altitude, radians
+        return new SunPosition(azimuth, altitude + Position.GetAstroRefraction(altitude));
+    }
+
+    /// <summary>
+    /// Calculates phases of the sun for a single day and latitude/longitude
+    /// and optionally the observer height (in meters) relative to the horizon
+    /// </summary>
+    /// <param name="date"></param>
+    /// <param name="lat"></param>
+    /// <param name="lng"></param>
+    /// <param name="height"></param>
+    /// <returns></returns>
+    public static IEnumerable<SunPhase> GetSunPhases(DateTime date, double lat, double lng, double height = 0)
+    {
+        var lw = Constants.Rad * -lng;
+        var phi = Constants.Rad * lat;
+
+        var dh = SunTime.GetObserverAngle(height);
+
+        var daysSinceJ2000 = date.ToDaysSinceJ2000();
+
+        // Anchor to the input date's UTC solar day regardless of its time-of-day: round to that
+        // day's noon, offset to the nearest local solar noon, then let SolarTransit refine.
+        var d = Math.Round(Math.Round(daysSinceJ2000) - Constants.J0 - lw / (2 * Math.PI));
+        var dt = SunTime.SolarTransit(d + Constants.J0 + lw / (2 * Math.PI), lw);
+        var dec = Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt)).Declination;
+
+        var solarNoon = (dt + Constants.J2000).FromJulian();
+        var nadir = (dt + Constants.J2000 - 0.5).FromJulian();
+
+        var sunPhaseCol = new List<SunPhase>(2 + SunPhaseAngle.Count * 2)
         {
-            var lw = Constants.Rad * -lng;
-            var phi = Constants.Rad * lat;
-            var daysSinceJ2000 = date.ToDaysSinceJ2000();
+            new(SunPhaseName.SolarNoon, solarNoon),
+            new(SunPhaseName.Nadir, nadir)
+        };
 
-            var sunCoords = Sun.GetEquatorialCoords(daysSinceJ2000);
-            var h = Position.GetSiderealTime(daysSinceJ2000, lw) - sunCoords.RightAscension;
-
-            var azimuth = Position.GetAzimuth(h, phi, sunCoords.Declination);
-            var altitude = Position.GetAltitude(h, phi, sunCoords.Declination);
-
-            return new SunPosition(azimuth, altitude);
-        }
-
-        /// <summary>
-        /// Calculates phases of the sun for a single day and latitude/longitude
-        /// and optionally the observer height (in meters) relative to the horizon
-        /// </summary>
-        /// <param name="date"></param>
-        /// <param name="lat"></param>
-        /// <param name="lng"></param>
-        /// <param name="height"></param>
-        /// <returns></returns>
-        public static IEnumerable<SunPhase> GetSunPhases(DateTime date, double lat, double lng, double height = 0)
+        for (var i = 0; i < SunPhaseAngle.Count; i++)
         {
-            var lw = Constants.Rad * -lng;
-            var phi = Constants.Rad * lat;
+            var sunPhase = SunPhaseAngle.GetAt(i);
+            var h0 = (sunPhase.Angle + dh) * Constants.Rad;
 
-            var dh = SunTime.GetObserverAngle(height);
-            
-            var daysSinceJ2000 = date.ToDaysSinceJ2000();
+            var jrise = SunTime.GetSetJ(h0, dt, -1, lw, phi, dec);
+            var jset = SunTime.GetSetJ(h0, dt, 1, lw, phi, dec);
 
-            var n = SunTime.GetJulianCycle(daysSinceJ2000, lw);
-            var approxTransitDaysSinceJ2000 = SunTime.GetApproxTransit(0, lw, n);
-
-            var m = Sun.GetMeanAnomaly(approxTransitDaysSinceJ2000);
-            var l = Sun.GetEclipticLongitude(m);
-            var dec = Position.GetDeclination(l, 0);
-
-            var jnoon = SunTime.GetSolarTransitJ(approxTransitDaysSinceJ2000, m, l);
-            var solarNoon = jnoon.FromJulian();
-            var nadir = (jnoon - 0.5).FromJulian();
-
-            var sunPhaseCol = new List<SunPhase>(2 + SunPhaseAngle.Count * 2)
+            // a NaN means the Sun never reaches this altitude on this day — omit that event
+            if (!double.IsNaN(jrise))
             {
-                new(SunPhaseName.SolarNoon, solarNoon),
-                new(SunPhaseName.Nadir, nadir)
-            };
-
-            for (var i = 0; i < SunPhaseAngle.Count; i++)
-            {
-                var sunPhase = SunPhaseAngle.GetAt(i);
-                var h0 = (sunPhase.Angle + dh) * Constants.Rad;
-                var jset = SunTime.GetSetJ(h0, lw, phi, dec, n, m, l);
-
-                if (double.IsNaN(jset) || double.IsInfinity(jset))
-                {
-                    continue;
-                }
-
-                var jrise = jnoon - (jset - jnoon);
-                sunPhaseCol.Add(new SunPhase(sunPhase.RiseName, jrise.FromJulian()));
-                sunPhaseCol.Add(new SunPhase(sunPhase.SetName, jset.FromJulian()));
+                sunPhaseCol.Add(new SunPhase(sunPhase.RiseName, (jrise + Constants.J2000).FromJulian()));
             }
 
-            return sunPhaseCol;
+            if (!double.IsNaN(jset))
+            {
+                sunPhaseCol.Add(new SunPhase(sunPhase.SetName, (jset + Constants.J2000).FromJulian()));
+            }
         }
+
+        return sunPhaseCol;
     }
 }

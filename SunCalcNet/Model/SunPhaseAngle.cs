@@ -1,43 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SunCalcNet.Model
+namespace SunCalcNet.Model;
+
+[Serializable]
+public class SunPhaseAngle
 {
-    [Serializable]
-    public class SunPhaseAngle
+    private static readonly SunPhaseAngle[] Values =
     {
-        private static readonly SunPhaseAngle[] Values =
-        {
-            new(-0.833, SunPhaseName.Sunrise, SunPhaseName.Sunset),
-            new(-0.3, SunPhaseName.SunriseEnd, SunPhaseName.SunsetStart),
-            new(-6, SunPhaseName.Dawn, SunPhaseName.Dusk),
-            new(-12, SunPhaseName.NauticalDawn, SunPhaseName.NauticalDusk),
-            new(-18, SunPhaseName.NightEnd, SunPhaseName.Night),
-            new(6, SunPhaseName.GoldenHourEnd, SunPhaseName.GoldenHour)
-        };
+        new(-0.833, SunPhaseName.Sunrise, SunPhaseName.Sunset),
+        new(-0.3, SunPhaseName.SunriseEnd, SunPhaseName.SunsetStart),
+        new(-6, SunPhaseName.Dawn, SunPhaseName.Dusk),
+        new(-12, SunPhaseName.NauticalDawn, SunPhaseName.NauticalDusk),
+        new(-18, SunPhaseName.NightEnd, SunPhaseName.Night),
+        new(6, SunPhaseName.GoldenHourEnd, SunPhaseName.GoldenHour)
+    };
 
-        private static readonly IReadOnlyCollection<SunPhaseAngle> ReadOnlyValues = Array.AsReadOnly(Values);
+    private static readonly IReadOnlyCollection<SunPhaseAngle> ReadOnlyValues = Array.AsReadOnly(Values);
 
-        public double Angle { get; }
+    public double Angle { get; }
 
-        public SunPhaseName RiseName { get; }
+    public SunPhaseName RiseName { get; }
 
-        public SunPhaseName SetName { get; }
+    public SunPhaseName SetName { get; }
 
-        private SunPhaseAngle(double angle, SunPhaseName riseName, SunPhaseName setName)
-        {
-            Angle = angle;
-            RiseName = riseName;
-            SetName = setName;
-        }
-
-        internal static int Count => Values.Length;
-
-        internal static SunPhaseAngle GetAt(int index)
-        {
-            return Values[index];
-        }
-
-        public static IReadOnlyCollection<SunPhaseAngle> List => ReadOnlyValues;
+    private SunPhaseAngle(double angle, SunPhaseName riseName, SunPhaseName setName)
+    {
+        Angle = angle;
+        RiseName = riseName;
+        SetName = setName;
     }
+
+    internal static int Count => Values.Length;
+
+    internal static SunPhaseAngle GetAt(int index)
+    {
+        return Values[index];
+    }
+
+    public static IReadOnlyCollection<SunPhaseAngle> List => ReadOnlyValues;
 }

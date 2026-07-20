@@ -1,50 +1,36 @@
 ﻿using SunCalcNet.Model;
 using System;
 
-namespace SunCalcNet.Internal
+namespace SunCalcNet.Internal;
+
+internal static class Sun
 {
-    internal static class Sun
+    /// <summary>
+    /// Sun's apparent equatorial coordinates, Meeus ch. 25 (nutation + aberration, T-dependent obliquity).
+    /// </summary>
+    /// <param name="daysSinceJ2000Tt">Days since J2000.0 in Terrestrial Time (see <see cref="AstroTime.ToDaysTt"/>).</param>
+    /// <returns>Apparent equatorial coordinates of the Sun.</returns>
+    internal static EquatorialCoords GetApparentEquatorialCoords(double daysSinceJ2000Tt)
     {
-        /// <summary>
-        /// The position that the planet would have relative to its perihelion if the orbit of the planet were a circle is called the mean anomaly.
-        /// </summary>
-        /// <param name="daysSinceJ2000">Days since J2000.0 (January 1, 2000 12:00 UTC).</param>
-        /// <returns></returns>
-        internal static double GetMeanAnomaly(double daysSinceJ2000)
-        {
-            return Constants.Rad * (357.5291 + 0.98560028 * daysSinceJ2000);
-        }
+        var t = daysSinceJ2000Tt / 36525; // Julian centuries since J2000
 
-        /// <summary>
-        /// The difference between the true anomaly and the mean anomaly is called the Equation of Center.
-        /// </summary>
-        /// <param name="m"></param>
-        /// <returns></returns>
-        internal static double GetEclipticLongitude(double m)
-        {
-            var equationOfCenter = GetEquationOfCenter(m);
-            return m + equationOfCenter + Constants.EarthPerihelion + Math.PI;
-        }
+        var l0 = Constants.Rad * (280.46646 + t * (36000.76983 + t * 0.0003032)); // 25.2 geometric mean longitude
+        var m = Constants.Rad * (357.52911 + t * (35999.05029 - t * 0.0001537)); // 25.3 mean anomaly
+        var sinM = Math.Sin(m);
+        var cosM = Math.Cos(m);
 
-        /// <summary>
-        /// Get Sun coordinates.
-        /// </summary>
-        /// <param name="daysSinceJ2000">Days since J2000.0 (January 1, 2000 12:00 UTC).</param>
-        /// <returns></returns>
-        internal static EquatorialCoords GetEquatorialCoords(double daysSinceJ2000)
-        {
-            var meanAnomaly = GetMeanAnomaly(daysSinceJ2000);
-            var eclipticLongitude = GetEclipticLongitude(meanAnomaly);
+        // equation of center
+        var c = Constants.Rad * ((1.914602 - t * (0.004817 + t * 0.000014)) * sinM + (0.019993 - 0.000101 * t) * 2 * sinM * cosM + 0.000289 * sinM * (3 - 4 * sinM * sinM));
 
-            var dec = Position.GetDeclination(eclipticLongitude, 0);
-            var ra = Position.GetRightAscension(eclipticLongitude, 0);
+        var om = Constants.Rad * (125.04 - 1934.136 * t); // longitude of the ascending node
+        var l = l0 + c - Constants.Rad * (0.00569 + 0.00478 * Math.Sin(om)); // apparent longitude (nutation + aberration)
 
-            return new EquatorialCoords(ra, dec);
-        }
+        // 22.2 mean obliquity + 25.8 correction for apparent position
+        var e = Constants.Rad * (23.439291 - t * (0.0130042 + t * (0.00000016 - t * 0.000000504))) + Constants.Rad * 0.00256 * Math.Cos(om);
 
-        private static double GetEquationOfCenter(double m)
-        {
-            return Constants.Rad * (1.9148 * Math.Sin(m) + 0.02 * Math.Sin(2 * m) + 0.0003 * Math.Sin(3 * m));
-        }
+        var ra = Position.GetRightAscension(l, 0, e); // 25.6
+        var dec = Position.GetDeclination(l, 0, e); // 25.7
+
+        return new EquatorialCoords(ra, dec);
     }
 }
