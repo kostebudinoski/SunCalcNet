@@ -24,8 +24,8 @@ var lng = 30.5;
 
 var sunPosition = SunCalc.GetSunPosition(date, lat, lng);
 
-Assert.Equal(-2.5003175907168385, sunPosition.Azimuth, 15);
-Assert.Equal(-0.7000406838781611, sunPosition.Altitude, 15);
+Assert.Equal(-2.4967445445669547, sunPosition.Azimuth, 14);
+Assert.Equal(-0.6888030343391054, sunPosition.Altitude, 14);
 ```
 Get position of the moon (azimuth, altitude, distance and parallactic angle)
 ```csharp
@@ -35,10 +35,10 @@ var lng = 30.5;
 
 var moonPosition = MoonCalc.GetMoonPosition(date, lat, lng);
 
-Assert.Equal(-0.9783999522438226, moonPosition.Azimuth, 15);
-Assert.Equal(0.0145514822438922, moonPosition.Altitude, 15);
-Assert.Equal(364121.37256256194, moonPosition.Distance, 15);
-Assert.Equal(-0.59832117604234014, moonPosition.ParallacticAngle, 15);
+Assert.Equal(-0.9661994436443471, moonPosition.Azimuth, 12);
+Assert.Equal(0.007971096659309906, moonPosition.Altitude, 12);
+Assert.Equal(370193.9925193064, moonPosition.Distance, 6);
+Assert.Equal(-0.5923875457617929, moonPosition.ParallacticAngle, 12);
 ```
 Get Sun phases
 ```csharp
@@ -59,9 +59,9 @@ var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
 
 var moonIllum = MoonCalc.GetMoonIllumination(date);
 
-Assert.Equal(0.4848068202456373, moonIllum.Fraction, 15);
-Assert.Equal(0.7548368838538762, moonIllum.Phase, 15);
-Assert.Equal(1.6732942678578346, moonIllum.Angle, 15);
+Assert.Equal(0.4911927817602366, moonIllum.Fraction, 12);
+Assert.Equal(0.7528035696247392, moonIllum.Phase, 12);
+Assert.Equal(1.6763844401987489, moonIllum.Angle, 12);
 ```
 
 About Suncalc.js

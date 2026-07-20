@@ -1,58 +1,57 @@
 ﻿using System;
 
-namespace SunCalcNet.Model
+namespace SunCalcNet.Model;
+
+[Serializable]
+public struct MoonIllumination : IEquatable<MoonIllumination>
 {
-    [Serializable]
-    public struct MoonIllumination : IEquatable<MoonIllumination>
+    public double Fraction { get; }
+
+    public double Phase { get; }
+
+    public double Angle { get; }
+
+    public MoonIllumination(double fraction, double phase, double angle)
     {
-        public double Fraction { get; }
+        Fraction = fraction;
+        Phase = phase;
+        Angle = angle;
+    }
 
-        public double Phase { get; }
+    public static bool operator ==(MoonIllumination lhs, MoonIllumination rhs)
+    {
+        return lhs.Equals(rhs);
+    }
 
-        public double Angle { get; }
+    public static bool operator !=(MoonIllumination lhs, MoonIllumination rhs)
+    {
+        return !(lhs == rhs);
+    }
 
-        public MoonIllumination(double fraction, double phase, double angle)
+    public bool Equals(MoonIllumination other)
+    {
+        return Fraction == other.Fraction
+               && Phase == other.Phase
+               && Angle == other.Angle;
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (obj is MoonIllumination illumination)
         {
-            Fraction = fraction;
-            Phase = phase;
-            Angle = angle;
+            return Equals(illumination);
         }
 
-        public static bool operator ==(MoonIllumination lhs, MoonIllumination rhs)
-        {
-            return lhs.Equals(rhs);
-        }
+        return false;
+    }
 
-        public static bool operator !=(MoonIllumination lhs, MoonIllumination rhs)
+    public override int GetHashCode()
+    {
+        unchecked
         {
-            return !(lhs == rhs);
-        }
-
-        public bool Equals(MoonIllumination other)
-        {
-            return Fraction == other.Fraction
-                   && Phase == other.Phase
-                   && Angle == other.Angle;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is MoonIllumination illumination)
-            {
-                return Equals(illumination);
-            }
-
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = Fraction.GetHashCode();
-                hashCode = (hashCode * 397) ^ Phase.GetHashCode();
-                return (hashCode * 397) ^ Angle.GetHashCode();
-            }
+            var hashCode = Fraction.GetHashCode();
+            hashCode = (hashCode * 397) ^ Phase.GetHashCode();
+            return (hashCode * 397) ^ Angle.GetHashCode();
         }
     }
 }

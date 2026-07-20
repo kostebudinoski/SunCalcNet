@@ -1,50 +1,76 @@
 ﻿using System;
 
-namespace SunCalcNet.Internal
+namespace SunCalcNet.Internal;
+
+internal static class SunTime
 {
-    internal static class SunTime
+    /// <summary>
+    /// Observer-height horizon dip (radians) for an observer at the given height (meters).
+    /// </summary>
+    internal static double GetObserverAngle(double height)
     {
-        internal static double GetJulianCycle(double daysSinceJ2000, double lw)
+        return -2.076 * Math.Sqrt(height) / 60;
+    }
+
+    /// <summary>
+    /// Wraps an angle to the range (-PI, PI].
+    /// </summary>
+    private static double WrapPi(double a)
+    {
+        return a - 2 * Math.PI * Math.Round(a / (2 * Math.PI));
+    }
+
+    /// <summary>
+    /// Refines a transit time so the Sun's local hour angle is zero (Meeus 15.2).
+    /// </summary>
+    /// <param name="dt">Approximate transit, days since J2000 (UT).</param>
+    /// <param name="lw">Longitude west in radians.</param>
+    /// <returns>Refined transit, days since J2000 (UT).</returns>
+    internal static double SolarTransit(double dt, double lw)
+    {
+        for (var i = 0; i < 3; i++)
         {
-            return Math.Round(daysSinceJ2000 - Constants.J0 - lw / (2 * Math.PI));
+            var hourAngle = WrapPi(Position.GetSiderealTime(dt, lw) - Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt)).RightAscension);
+            dt -= hourAngle / (2 * Math.PI);
         }
 
-        internal static double GetApproxTransit(double ht, double lw, double n)
+        return dt;
+    }
+
+    /// <summary>
+    /// Time the Sun reaches altitude <paramref name="h0"/> on the given side of transit,
+    /// converging with Meeus' altitude correction (15.2).
+    /// </summary>
+    /// <param name="h0">Target altitude in radians.</param>
+    /// <param name="dt">Transit time, days since J2000 (UT).</param>
+    /// <param name="sign">-1 for rise, +1 for set.</param>
+    /// <param name="lw">Longitude west in radians.</param>
+    /// <param name="phi">Observer latitude in radians.</param>
+    /// <param name="dec">Sun declination at transit in radians.</param>
+    /// <returns>Event time, days since J2000 (UT); NaN if the Sun stays above/below this altitude all day.</returns>
+    internal static double GetSetJ(double h0, double dt, int sign, double lw, double phi, double dec)
+    {
+        var cosH0 = (Math.Sin(h0) - Math.Sin(phi) * Math.Sin(dec)) / (Math.Cos(phi) * Math.Cos(dec));
+        if (cosH0 < -1 || cosH0 > 1)
         {
-            return Constants.J0 + (ht + lw) / (2 * Math.PI) + n;
+            return double.NaN; // sun stays above / below this altitude all day
         }
 
-        internal static double GetSolarTransitJ(double approxTransitDaysSinceJ2000, double m, double l)
+        var d = dt + sign * Math.Acos(cosH0) / (2 * Math.PI);
+        for (var i = 0; i < 2; i++)
         {
-            return Constants.J2000 + approxTransitDaysSinceJ2000 + 0.0053 * Math.Sin(m) - 0.0069 * Math.Sin(2 * l);
+            var c = Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(d));
+            var hourAngle = WrapPi(Position.GetSiderealTime(d, lw) - c.RightAscension);
+            var h = Position.GetAltitude(hourAngle, phi, c.Declination);
+            var sinH = Math.Cos(phi) * Math.Cos(c.Declination) * Math.Sin(hourAngle);
+            if (Math.Abs(sinH) < 1e-6)
+            {
+                break; // grazing the horizon — correction is ill-conditioned
+            }
+
+            d += (h - h0) / (2 * Math.PI * sinH);
         }
 
-        /// <summary>
-        /// Returns set time for the given sun altitude
-        /// </summary>
-        /// <param name="h"></param>
-        /// <param name="lw"></param>
-        /// <param name="phi"></param>
-        /// <param name="dec"></param>
-        /// <param name="n"></param>
-        /// <param name="m"></param>
-        /// <param name="l"></param>
-        /// <returns></returns>
-        internal static double GetSetJ(double h, double lw, double phi, double dec, double n, double m, double l)
-        {
-            var w = GetHourAngle(h, phi, dec);
-            var approxTransitDaysSinceJ2000 = GetApproxTransit(w, lw, n);
-            return GetSolarTransitJ(approxTransitDaysSinceJ2000, m, l);
-        }
-        
-        internal static double GetObserverAngle(double height)
-        {
-            return -2.076 * Math.Sqrt(height) / 60;
-        }
-
-        private static double GetHourAngle(double h, double phi, double d)
-        {
-            return Math.Acos((Math.Sin(h) - Math.Sin(phi) * Math.Sin(d)) / (Math.Cos(phi) * Math.Cos(d)));
-        }
+        return d;
     }
 }
