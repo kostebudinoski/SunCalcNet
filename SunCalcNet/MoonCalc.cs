@@ -173,6 +173,11 @@ public static class MoonCalc
         {
             var h = GetMoonHeight(time, lw, phi);
             var dh = (GetMoonHeight(time.AddSeconds(30), lw, phi) - GetMoonHeight(time.AddSeconds(-30), lw, phi)) / 60.0;
+            if (Math.Abs(dh) < 1e-12)
+            {
+                break; // grazing the horizon — the Newton correction is ill-conditioned
+            }
+
             time = time.AddSeconds(-h / dh);
         }
 
