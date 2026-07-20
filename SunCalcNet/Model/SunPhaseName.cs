@@ -54,7 +54,7 @@ public sealed class SunPhaseName : IEquatable<SunPhaseName>
     {
         return !(left == right);
     }
-    
+
     public override string ToString()
     {
         return Value;

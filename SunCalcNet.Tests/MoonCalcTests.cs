@@ -59,7 +59,7 @@ public class MoonCalcTests
         Assert.False(moonPhase.AlwaysDown);
         Assert.False(moonPhase.AlwaysUp);
     }
-        
+
     [Fact]
     public void Get_Moon_Times_Time_Specified_Returns_MoonRise_And_Set_Times()
     {
@@ -70,7 +70,7 @@ public class MoonCalcTests
 
         //Act
         var moonPhase = MoonCalc.GetMoonPhase(date, lat, lng);
-            
+
         //Assert
         Assert.Null(moonPhase.Rise);
         Assert.NotNull(moonPhase.Set);

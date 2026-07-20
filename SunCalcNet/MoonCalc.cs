@@ -142,7 +142,7 @@ public static class MoonCalc
 
             h0 = h2;
         }
-            
+
         // Newton-refine each crossing against the real moon-height curve (the quadratic sampler's
         // parabola root can sit ~0.2° off), then convert fractional hours to an absolute time.
         var riseTime = rise.HasValue ? RefineMoonCross(date.HoursLater(rise.Value), lw, phi) : (DateTime?) null;

@@ -10,11 +10,11 @@ internal static class Position
     private const double RefractionCoefficient = 0.0002967;
     private const double RefractionInnerNumerator = 0.00312536;
     private const double RefractionDenominatorOffset = 0.08901179;
-    
+
     // Greenwich mean sidereal time constants, Meeus formula 12.4 (linear term).
     private const double SiderealBase = 280.46061837;
     private const double SiderealCoefficient = 360.98564736629;
-        
+
     /// <summary>
     /// Calculates the right ascension for the given celestial coordinates using an explicit obliquity.
     /// </summary>
@@ -29,7 +29,7 @@ internal static class Position
             Math.Tan(latitude) * Math.Sin(obliquity),
             Math.Cos(longitude));
     }
-        
+
     /// <summary>
     /// Calculates the declination for the given celestial coordinates using an explicit obliquity.
     /// </summary>
@@ -43,7 +43,7 @@ internal static class Position
             Math.Sin(latitude) * Math.Cos(obliquity) +
             Math.Cos(latitude) * Math.Sin(obliquity) * Math.Sin(longitude));
     }
-        
+
     /// <summary>
     /// Calculates the azimuth angle.
     /// </summary>
@@ -57,7 +57,7 @@ internal static class Position
             Math.Sin(hourAngle),
             Math.Cos(hourAngle) * Math.Sin(latitude) - Math.Tan(declination) * Math.Cos(latitude));
     }
-        
+
     /// <summary>
     /// Calculates the altitude of a celestial body.
     /// </summary>
@@ -68,10 +68,10 @@ internal static class Position
     internal static double GetAltitude(double hourAngle, double latitude, double declination)
     {
         return Math.Asin(
-            Math.Sin(latitude) * Math.Sin(declination) + 
+            Math.Sin(latitude) * Math.Sin(declination) +
             Math.Cos(latitude) * Math.Cos(declination) * Math.Cos(hourAngle));
     }
-        
+
     /// <summary>
     /// Calculates the local sidereal time.
     /// </summary>

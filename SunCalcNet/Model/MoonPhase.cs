@@ -36,7 +36,7 @@ public struct MoonPhase : IEquatable<MoonPhase>
         {
             return;
         }
-            
+
         if (ye > 0)
         {
             AlwaysUp = true;

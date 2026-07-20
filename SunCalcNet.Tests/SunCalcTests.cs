@@ -90,15 +90,15 @@ public class SunCalcTests
             new(SunPhaseName.Sunrise, new DateTime(2013, 3, 5, 4, 23, 43, DateTimeKind.Utc)),
             new(SunPhaseName.Sunset, new DateTime(2013, 3, 5, 15, 56, 8, DateTimeKind.Utc))
         };
-            
+
         var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
         var lat = 50.5;
         var lng = 30.5;
         var height = 2000;
-            
+
         //Act
         var sunPhases = SunCalc.GetSunPhases(date, lat, lng, height).ToList();
-            
+
         //Assert
         foreach (var testSunPhase in heightTestData)
         {
