@@ -58,8 +58,8 @@ public class SunCalcTests
         {
             var sunPhaseValue = sunPhases.First(x => x.Name == testSunPhase.Name);
 
-            var testDataPhaseTime = testSunPhase.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
-            var sunPhaseTime = sunPhaseValue.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
+            var testDataPhaseTime = testSunPhase.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss");
+            var sunPhaseTime = sunPhaseValue.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss");
             Assert.Equal(testDataPhaseTime, sunPhaseTime);
         }
     }
@@ -104,8 +104,8 @@ public class SunCalcTests
         {
             var sunPhaseValue = sunPhases.First(x => x.Name == testSunPhase.Name);
 
-            var testDataPhaseTime = testSunPhase.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
-            var sunPhaseTime = sunPhaseValue.PhaseTime.ToString("yyyy-MM-dd hh:mm:ss");
+            var testDataPhaseTime = testSunPhase.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss");
+            var sunPhaseTime = sunPhaseValue.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss");
             Assert.Equal(testDataPhaseTime, sunPhaseTime);
         }
     }
