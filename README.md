@@ -62,6 +62,7 @@ var moonIllum = MoonCalc.GetMoonIllumination(date);
 Assert.Equal(0.4911927817602366, moonIllum.Fraction, 12);
 Assert.Equal(0.7528035696247392, moonIllum.Phase, 12);
 Assert.Equal(1.6763844401987489, moonIllum.Angle, 12);
+Assert.False(moonIllum.Waxing);
 ```
 
 About Suncalc.js
