@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SunCalcNet.Tests/SunCalcNet.Tests.csproj" />
+  <Project Path="SunCalcNet/SunCalcNet.csproj" />
+</Solution>
