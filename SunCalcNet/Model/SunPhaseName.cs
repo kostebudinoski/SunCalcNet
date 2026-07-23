@@ -12,6 +12,18 @@ public sealed class SunPhaseName : IEquatable<SunPhaseName>
 
     public string Value { get; }
 
+    /// <summary>
+    /// Creates a custom sun phase name, for use with user-defined <see cref="SunPhaseAngle"/> values.
+    /// The built-in phases (<see cref="Sunrise"/>, <see cref="Dusk"/>, etc.) should be referenced directly.
+    /// </summary>
+    /// <param name="value">A non-empty, unique name for the phase.</param>
+    public static SunPhaseName Custom(string value)
+    {
+        return string.IsNullOrEmpty(value) ? 
+            throw new ArgumentException("A sun phase name must be a non-empty string.", nameof(value)) : 
+            new SunPhaseName(value);
+    }
+
     public static readonly SunPhaseName SolarNoon = new("Solar Noon");
     public static readonly SunPhaseName Nadir = new("Nadir");
     public static readonly SunPhaseName Sunrise = new("Sunrise");

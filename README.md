@@ -53,6 +53,24 @@ foreach (var sunPhase in sunPhases)
     ...
 }
 ```
+Get Sun phases with custom angles
+
+Define your own phase angles (in degrees relative to the horizon) and pass them to `GetSunPhases`. Use `SunPhaseAngle.Default` to compose your angles with the built-in ones.
+```csharp
+var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+var lat = 50.5;
+var lng = 30.5;
+
+// Only your own phases (plus solar noon and nadir, which are always included)
+var customAngles = new[] { new SunPhaseAngle(-4, "blueHourDawn", "blueHourDusk") };
+
+var sunPhases = SunCalc.GetSunPhases(date, lat, lng, customAngles).ToList();
+
+// Or combine with the built-in phases
+var angles = SunPhaseAngle.Default.Append(new SunPhaseAngle(-4, "blueHourDawn", "blueHourDusk"));
+
+var allPhases = SunCalc.GetSunPhases(date, lat, lng, angles).ToList();
+```
 Get Moon Illumination
 ```csharp
 var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);

@@ -1,4 +1,4 @@
-using SunCalcNet.Internal;
+﻿using SunCalcNet.Internal;
 using SunCalcNet.Model;
 using SunCalcNet.Utils;
 using System;
