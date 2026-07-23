@@ -36,6 +36,21 @@ public class MoonCalcTests
         Assert.Equal(0.4911927817602366, moonIllum.Fraction, 12);
         Assert.Equal(0.7528035696247392, moonIllum.Phase, 12);
         Assert.Equal(1.6763844401987489, moonIllum.Angle, 12);
+        Assert.False(moonIllum.Waxing); // phase > 0.5 -> waning
+    }
+
+    [Fact]
+    public void Get_Moon_Illumination_Reports_Waxing_During_The_First_Half_Of_The_Lunation()
+    {
+        //Arrange
+        var date = new DateTime(2013, 3, 15, 0, 0, 0, DateTimeKind.Utc);
+
+        //Act
+        var moonIllum = MoonCalc.GetMoonIllumination(date);
+
+        //Assert
+        Assert.True(moonIllum.Waxing);
+        Assert.True(moonIllum.Phase < 0.5);
     }
 
     [Fact]

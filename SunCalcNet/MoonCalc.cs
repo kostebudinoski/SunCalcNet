@@ -57,10 +57,11 @@ public static class MoonCalc
             Math.Cos(sunCoords.Declination) * Math.Sin(moonCoords.Declination) *
             Math.Cos(sunCoords.RightAscension - moonCoords.RightAscension));
 
+        var waxing = angle < 0; // bright limb leads -> illuminated fraction is growing (new -> full)
         var fraction = (1 + Math.Cos(inc)) / 2;
-        var phase = 0.5 + 0.5 * inc * (angle < 0 ? -1 : 1) / Math.PI;
+        var phase = 0.5 + 0.5 * inc * (waxing ? -1 : 1) / Math.PI;
 
-        return new MoonIllumination(fraction, phase, angle);
+        return new MoonIllumination(fraction, phase, angle, waxing);
     }
 
     /// <summary>

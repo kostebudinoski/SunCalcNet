@@ -11,11 +11,18 @@ public struct MoonIllumination : IEquatable<MoonIllumination>
 
     public double Angle { get; }
 
-    public MoonIllumination(double fraction, double phase, double angle)
+    /// <summary>
+    /// True while the Moon is waxing (illuminated fraction growing, new -> full),
+    /// false while waning (full -> new).
+    /// </summary>
+    public bool Waxing { get; }
+
+    public MoonIllumination(double fraction, double phase, double angle, bool waxing)
     {
         Fraction = fraction;
         Phase = phase;
         Angle = angle;
+        Waxing = waxing;
     }
 
     public static bool operator ==(MoonIllumination lhs, MoonIllumination rhs)
@@ -32,7 +39,8 @@ public struct MoonIllumination : IEquatable<MoonIllumination>
     {
         return Fraction == other.Fraction
                && Phase == other.Phase
-               && Angle == other.Angle;
+               && Angle == other.Angle
+               && Waxing == other.Waxing;
     }
 
     public override bool Equals(object obj)
@@ -51,7 +59,8 @@ public struct MoonIllumination : IEquatable<MoonIllumination>
         {
             var hashCode = Fraction.GetHashCode();
             hashCode = (hashCode * 397) ^ Phase.GetHashCode();
-            return (hashCode * 397) ^ Angle.GetHashCode();
+            hashCode = (hashCode * 397) ^ Angle.GetHashCode();
+            return (hashCode * 397) ^ Waxing.GetHashCode();
         }
     }
 }
