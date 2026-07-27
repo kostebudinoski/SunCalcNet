@@ -1,4 +1,4 @@
-namespace SunCalcNet.Internal;
+﻿namespace SunCalcNet.Internal;
 
 /// <summary>
 /// Terrestrial Time (TT) support. The Meeus position series are defined in Terrestrial Time,

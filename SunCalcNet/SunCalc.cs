@@ -34,7 +34,8 @@ public static class SunCalc
 
     /// <summary>
     /// Calculates phases of the sun for a single day and latitude/longitude
-    /// and optionally the observer height (in meters) relative to the horizon
+    /// and optionally the observer height (in meters) relative to the horizon,
+    /// using the built-in <see cref="SunPhaseAngle.Default"/> phase angles.
     /// </summary>
     /// <param name="date"></param>
     /// <param name="lat"></param>
@@ -43,6 +44,28 @@ public static class SunCalc
     /// <returns></returns>
     public static IEnumerable<SunPhase> GetSunPhases(DateTime date, double lat, double lng, double height = 0)
     {
+        return GetSunPhases(date, lat, lng, SunPhaseAngle.Default, height);
+    }
+
+    /// <summary>
+    /// Calculates phases of the sun for a single day and latitude/longitude using the supplied
+    /// phase angles, and optionally the observer height (in meters) relative to the horizon.
+    /// Solar noon and nadir are always included. Pass <see cref="SunPhaseAngle.Default"/> for the
+    /// built-in set, or compose custom angles, e.g. <c>SunPhaseAngle.Default.Append(myAngle)</c>.
+    /// </summary>
+    /// <param name="date"></param>
+    /// <param name="lat"></param>
+    /// <param name="lng"></param>
+    /// <param name="phaseAngles">The sun phase angles to calculate rise/set events for.</param>
+    /// <param name="height"></param>
+    /// <returns></returns>
+    public static IEnumerable<SunPhase> GetSunPhases(DateTime date, double lat, double lng, IEnumerable<SunPhaseAngle> phaseAngles, double height = 0)
+    {
+        if (phaseAngles is null)
+        {
+            throw new ArgumentNullException(nameof(phaseAngles));
+        }
+
         var lw = Constants.Rad * -lng;
         var phi = Constants.Rad * lat;
 
@@ -59,15 +82,14 @@ public static class SunCalc
         var solarNoon = (dt + Constants.J2000).FromJulian();
         var nadir = (dt + Constants.J2000 - 0.5).FromJulian();
 
-        var sunPhaseCol = new List<SunPhase>(2 + SunPhaseAngle.Count * 2)
+        var sunPhaseCol = new List<SunPhase>
         {
             new(SunPhaseName.SolarNoon, solarNoon),
             new(SunPhaseName.Nadir, nadir)
         };
 
-        for (var i = 0; i < SunPhaseAngle.Count; i++)
+        foreach (var sunPhase in phaseAngles)
         {
-            var sunPhase = SunPhaseAngle.GetAt(i);
             var h0 = (sunPhase.Angle + dh) * Constants.Rad;
 
             var jrise = SunTime.GetSetJ(h0, dt, -1, lw, phi, dec);

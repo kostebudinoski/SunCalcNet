@@ -1,4 +1,4 @@
-namespace SunCalcNet.Internal;
+﻿namespace SunCalcNet.Internal;
 
 /// <summary>
 /// Result of a nutation calculation: nutation in longitude and the true obliquity of the ecliptic.

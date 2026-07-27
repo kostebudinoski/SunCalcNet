@@ -109,4 +109,43 @@ public class SunCalcTests
             Assert.Equal(testDataPhaseTime, sunPhaseTime);
         }
     }
+
+    [Fact]
+    public void Get_Sun_Phases_Uses_The_Supplied_Custom_Phase_Angles()
+    {
+        //Arrange
+        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var lat = 50.5;
+        var lng = 30.5;
+        var customAngles = new[] { new SunPhaseAngle(-4, "blueHourDawn", "blueHourDusk") };
+
+        //Act
+        var sunPhases = SunCalc.GetSunPhases(date, lat, lng, customAngles).ToList();
+
+        //Assert
+        Assert.Equal(4, sunPhases.Count);
+        Assert.DoesNotContain(sunPhases, x => x.Name == SunPhaseName.Sunrise);
+        var dawn = sunPhases.First(x => x.Name == SunPhaseName.Custom("blueHourDawn"));
+        var dusk = sunPhases.First(x => x.Name == SunPhaseName.Custom("blueHourDusk"));
+        Assert.Equal("2013-03-05 04:13:30", dawn.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss"));
+        Assert.Equal("2013-03-05 16:06:23", dusk.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss"));
+    }
+
+    [Fact]
+    public void Get_Sun_Phases_Can_Combine_Default_And_Custom_Phase_Angles()
+    {
+        //Arrange
+        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var lat = 50.5;
+        var lng = 30.5;
+        var angles = SunPhaseAngle.Default.Append(new SunPhaseAngle(-4, "blueHourDawn", "blueHourDusk"));
+
+        //Act
+        var sunPhases = SunCalc.GetSunPhases(date, lat, lng, angles).ToList();
+
+        //Assert
+        Assert.Equal(16, sunPhases.Count);
+        Assert.Contains(sunPhases, x => x.Name == SunPhaseName.Sunrise);
+        Assert.Contains(sunPhases, x => x.Name == SunPhaseName.Custom("blueHourDawn"));
+    }
 }
