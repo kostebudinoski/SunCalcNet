@@ -94,4 +94,33 @@ public class MoonCalcTests
         Assert.False(moonPhase.AlwaysDown);
         Assert.False(moonPhase.AlwaysUp);
     }
+    
+    [Theory]
+    [InlineData(2022, 1, 14)]
+    [InlineData(2022, 1, 15)]
+    [InlineData(2022, 1, 16)]
+    public void Get_Moon_Times_No_Crossing_Day_Flags_AlwaysUp_When_Moon_Stays_Above_Horizon(int year, int month, int day)
+    {
+        //Arrange
+        var date = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
+        var lat = 78;
+        var lng = 78;
+
+        var minAltitude = double.MaxValue;
+        for (var h = 0.0; h <= 24; h += 0.5)
+        {
+            minAltitude = Math.Min(minAltitude, MoonCalc.GetMoonPosition(date.AddHours(h), lat, lng).Altitude);
+        }
+
+        Assert.True(minAltitude > 0, "moon dips below the horizon, fixture assumption wrong");
+
+        //Act
+        var moonPhase = MoonCalc.GetMoonPhase(date, lat, lng);
+
+        //Assert
+        Assert.Null(moonPhase.Rise);
+        Assert.Null(moonPhase.Set);
+        Assert.True(moonPhase.AlwaysUp);
+        Assert.False(moonPhase.AlwaysDown);
+    }
 }

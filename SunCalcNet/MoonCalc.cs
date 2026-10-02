@@ -80,7 +80,7 @@ public static class MoonCalc
         var h0 = GetMoonHeight(date, lw, phi);
         double? rise = null;
         double? set = null;
-        double ye = 0;
+        var hMax = h0;
 
         // go in 2-hour chunks,
         // each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
@@ -88,11 +88,12 @@ public static class MoonCalc
         {
             var h1 = GetMoonHeight(date.HoursLater(i), lw, phi);
             var h2 = GetMoonHeight(date.HoursLater(i + 1), lw, phi);
+            hMax = Math.Max(hMax, Math.Max(h1, h2));
 
             var a = (h0 + h2) / 2 - h1;
             var b = (h2 - h0) / 2;
             var xe = -b / (2 * a);
-            ye = (a * xe + b) * xe + h1;
+            var ye = (a * xe + b) * xe + h1;
             var d = b * b - 4 * a * h1;
             var roots = 0;
             double x1 = 0;
@@ -148,8 +149,8 @@ public static class MoonCalc
         // parabola root can sit ~0.2° off), then convert fractional hours to an absolute time.
         var riseTime = rise.HasValue ? RefineMoonCross(date.HoursLater(rise.Value), lw, phi) : (DateTime?) null;
         var setTime = set.HasValue ? RefineMoonCross(date.HoursLater(set.Value), lw, phi) : (DateTime?) null;
-
-        return new MoonPhase(riseTime, setTime, ye);
+        
+        return new MoonPhase(riseTime, setTime, hMax);
     }
 
     /// <summary>

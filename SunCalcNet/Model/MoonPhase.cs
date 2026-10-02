@@ -25,7 +25,11 @@ public struct MoonPhase : IEquatable<MoonPhase>
     /// </summary>
     public bool AlwaysDown { get; }
 
-    public MoonPhase(DateTime? rise, DateTime? set, double ye)
+    /// <param name="rise">Moonrise time, or null if the moon doesn't rise during the day.</param>
+    /// <param name="set">Moonset time, or null if the moon doesn't set during the day.</param>
+    /// <param name="maxHeight">Highest moon height above the rise/set horizon sampled over the day;
+    /// decides <see cref="AlwaysUp"/> / <see cref="AlwaysDown"/> when there's neither rise nor set.</param>
+    public MoonPhase(DateTime? rise, DateTime? set, double maxHeight)
     {
         Rise = rise;
         Set = set;
@@ -37,7 +41,7 @@ public struct MoonPhase : IEquatable<MoonPhase>
             return;
         }
 
-        if (ye > 0)
+        if (maxHeight > 0)
         {
             AlwaysUp = true;
         }
