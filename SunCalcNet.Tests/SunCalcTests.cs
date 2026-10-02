@@ -148,4 +148,30 @@ public class SunCalcTests
         Assert.Contains(sunPhases, x => x.Name == SunPhaseName.Sunrise);
         Assert.Contains(sunPhases, x => x.Name == SunPhaseName.Custom("blueHourDawn"));
     }
+    
+    [Theory]
+    [InlineData(-180)]
+    [InlineData(-179.9)]
+    [InlineData(-179.7)]
+    [InlineData(-179.676)]
+    [InlineData(-179.6)]
+    [InlineData(-90)]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(179.9)]
+    [InlineData(180)]
+    public void Get_Sun_Phases_Resolves_The_Solar_Day_Containing_The_Date_At_Every_Longitude(double lng)
+    {
+        //Arrange
+        var lat = 40;
+        var date = new DateTime(2026, 8, 19, 12, 0, 0, DateTimeKind.Utc).AddHours(-lng / 15); // local solar noon there
+
+        //Act
+        var sunPhases = SunCalc.GetSunPhases(date, lat, lng).ToList();
+
+        //Assert
+        var solarNoon = sunPhases.First(x => x.Name == SunPhaseName.SolarNoon).PhaseTime;
+        var offsetHours = (solarNoon - date).TotalHours;
+        Assert.True(Math.Abs(offsetHours) < 1, $"solar noon {solarNoon:O} is {offsetHours:F2} h from local solar noon");
+    }
 }

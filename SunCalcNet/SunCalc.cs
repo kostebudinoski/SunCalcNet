@@ -73,9 +73,9 @@ public static class SunCalc
 
         var daysSinceJ2000 = date.ToDaysSinceJ2000();
 
-        // Anchor to the input date's UTC solar day regardless of its time-of-day: round to that
-        // day's noon, offset to the nearest local solar noon, then let SolarTransit refine.
-        var d = Math.Round(Math.Round(daysSinceJ2000) - Constants.J0 - lw / (2 * Math.PI));
+        // Anchor to the local solar day containing the input instant: take the local solar noon
+        // nearest to it, then let SolarTransit refine.
+        var d = Math.Round(daysSinceJ2000 - Constants.J0 - lw / (2 * Math.PI));
         var dt = SunTime.SolarTransit(d + Constants.J0 + lw / (2 * Math.PI), lw);
         var dec = Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt)).Declination;
 
