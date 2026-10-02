@@ -1,24 +1,24 @@
 @* Moon as seen by the observer: the lit limb faces the sun, right when waxing in the northern hemisphere *@
 <svg class="moon-disc" viewBox="-80 -80 160 160" role="img" aria-label="@($"{Fraction:P0} illuminated")">
     <defs>
-        <radialGradient id="moonGlow">
+        <radialGradient id="moonGlow-@(id)">
             <stop offset="55%" stop-color="#f6f1dc" stop-opacity="0.35" />
             <stop offset="100%" stop-color="#f6f1dc" stop-opacity="0" />
         </radialGradient>
-        <radialGradient id="moonLit" cx="40%" cy="35%" r="75%">
+        <radialGradient id="moonLit-@(id)" cx="40%" cy="35%" r="75%">
             <stop offset="0%" stop-color="#fffdf2" />
             <stop offset="70%" stop-color="#e9e2c7" />
             <stop offset="100%" stop-color="#c9c0a0" />
         </radialGradient>
-        <clipPath id="moonLitClip">
+        <clipPath id="moonLitClip-@(id)">
             <path d="@LitPath" transform="@Mirror" />
         </clipPath>
     </defs>
 
-    <circle r="78" fill="url(#moonGlow)" opacity="@((0.25 + 0.75 * Fraction).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))" />
+    <circle r="78" fill="url(#moonGlow-@(id))" opacity="@((0.25 + 0.75 * Fraction).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))" />
     <circle r="@R" fill="#1d2236" />
-    <path d="@LitPath" transform="@Mirror" fill="url(#moonLit)" />
-    <g clip-path="url(#moonLitClip)" fill="#a99f7e" opacity="0.35">
+    <path d="@LitPath" transform="@Mirror" fill="url(#moonLit-@(id))" />
+    <g clip-path="url(#moonLitClip-@(id))" fill="#a99f7e" opacity="0.35">
         <circle cx="-18" cy="-20" r="11" />
         <circle cx="16" cy="-6" r="8" />
         <circle cx="-4" cy="22" r="13" />
@@ -31,6 +31,9 @@
 
 @code {
     private const double R = 56;
+
+    // SVG ids are document-wide; each disc needs its own so several moons can share a page
+    private readonly string id = Guid.NewGuid().ToString("N")[..8];
 
     [Parameter] public double Fraction { get; set; }
     [Parameter] public bool Waxing { get; set; }

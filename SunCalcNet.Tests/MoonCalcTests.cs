@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using SunCalcNet.Model;
 using Xunit;
 
@@ -11,7 +10,7 @@ public class MoonCalcTests
     public void Get_Moon_Position_Returns_Azimuth_Altitude_Distance_And_ParallacticAngle_For_The_Given_Time_And_Location()
     {
         //Arrange
-        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var date = Utc(2013, 3, 5);
         var lat = 50.5;
         var lng = 30.5;
 
@@ -29,7 +28,7 @@ public class MoonCalcTests
     public void Get_Moon_Illumination_Returns_Fraction_And_Angle_Of_Moons_Illuminated_Limb_And_Phase()
     {
         //Arrange
-        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var date = Utc(2013, 3, 5);
 
         //Act
         var moonIllum = MoonCalc.GetMoonIllumination(date);
@@ -45,7 +44,7 @@ public class MoonCalcTests
     public void Get_Moon_Illumination_Reports_Waxing_During_The_First_Half_Of_The_Lunation()
     {
         //Arrange
-        var date = new DateTime(2013, 3, 15, 0, 0, 0, DateTimeKind.Utc);
+        var date = Utc(2013, 3, 15);
 
         //Act
         var moonIllum = MoonCalc.GetMoonIllumination(date);
@@ -59,7 +58,7 @@ public class MoonCalcTests
     public void Get_Moon_Times_Returns_MoonRise_And_Set_Times()
     {
         //Arrange
-        var date = new DateTime(2013, 3, 4, 0, 0, 0, DateTimeKind.Utc);
+        var date = Utc(2013, 3, 4);
         var lat = 50.5;
         var lng = 30.5;
 
@@ -81,7 +80,7 @@ public class MoonCalcTests
     public void Get_Moon_Times_Time_Specified_Returns_MoonRise_And_Set_Times()
     {
         //Arrange
-        var date = new DateTime(2020, 5, 13, 10, 16, 0, DateTimeKind.Utc);
+        var date = Utc(2020, 5, 13, 10, 16);
         var lat = 48.2026;
         var lng = 16.3684;
 
@@ -96,7 +95,7 @@ public class MoonCalcTests
         Assert.False(moonPhase.AlwaysDown);
         Assert.False(moonPhase.AlwaysUp);
     }
-    
+
     [Theory]
     [InlineData(2022, 1, 14)]
     [InlineData(2022, 1, 15)]
@@ -104,7 +103,7 @@ public class MoonCalcTests
     public void Get_Moon_Times_No_Crossing_Day_Flags_AlwaysUp_When_Moon_Stays_Above_Horizon(int year, int month, int day)
     {
         //Arrange
-        var date = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
+        var date = Utc(year, month, day);
         var lat = 78;
         var lng = 78;
 
@@ -127,29 +126,29 @@ public class MoonCalcTests
     }
 
     [Theory]
-    [InlineData(50.45466, 30.5238, 2026, 1, 3, "2026-01-03 22:36")]
-    [InlineData(50.45466, 30.5238, 2026, 1, 18, "2026-01-18 09:51")]
-    [InlineData(78.22334, 15.64689, 2026, 1, 3, "2026-01-03 23:38")]
-    [InlineData(78.22334, 15.64689, 2026, 1, 10, "2026-01-10 04:28")]
-    public void Get_Moon_Times_Returns_Transit_Matching_USNO(double lat, double lng, int year, int month, int day, string expected)
+    [InlineData(50.45466, 30.5238, 2026, 1, 3, 22, 36)]
+    [InlineData(50.45466, 30.5238, 2026, 1, 18, 9, 51)]
+    [InlineData(78.22334, 15.64689, 2026, 1, 3, 23, 38)]
+    [InlineData(78.22334, 15.64689, 2026, 1, 10, 4, 28)]
+    public void Get_Moon_Times_Returns_Transit_Matching_USNO(double lat, double lng, int year, int month, int day, int hour, int minute)
     {
         //Arrange
-        var date = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
+        var date = Utc(year, month, day);
 
         //Act
         var moonPhase = MoonCalc.GetMoonPhase(date, lat, lng);
 
         //Assert
         Assert.NotNull(moonPhase.Transit);
-        var offMinutes = (moonPhase.Transit.Value - DateTime.Parse(expected, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal)).TotalMinutes;
-        Assert.True(Math.Abs(offMinutes) <= 1, $"transit {moonPhase.Transit:O} is {offMinutes:F2} min from USNO {expected}");
+        var offMinutes = (moonPhase.Transit.Value - Utc(year, month, day, hour, minute)).TotalMinutes;
+        Assert.True(Math.Abs(offMinutes) <= 1, $"transit {moonPhase.Transit:O} is {offMinutes:F2} min from USNO {hour:00}:{minute:00}");
     }
 
     [Fact]
     public void Get_Moon_Times_Returns_Lower_Transit_Matching_USNO_When_Moon_Is_Always_Up()
     {
         //Arrange
-        var date = new DateTime(2026, 1, 3, 0, 0, 0, DateTimeKind.Utc);
+        var date = Utc(2026, 1, 3);
         var lat = 78.22334;
         var lng = 15.64689;
 
@@ -159,19 +158,19 @@ public class MoonCalcTests
         //Assert
         Assert.True(moonPhase.AlwaysUp);
         Assert.NotNull(moonPhase.LowerTransit);
-        var offMinutes = (moonPhase.LowerTransit.Value - new DateTime(2026, 1, 3, 11, 6, 0, DateTimeKind.Utc)).TotalMinutes;
+        var offMinutes = (moonPhase.LowerTransit.Value - Utc(2026, 1, 3, 11, 6)).TotalMinutes;
         Assert.True(Math.Abs(offMinutes) <= 1, $"lower transit {moonPhase.LowerTransit:O} is {offMinutes:F2} min from USNO 11:06");
     }
 
     [Theory]
-    [InlineData(51.5, -0.1)]
-    [InlineData(-33.9, 151.2)]
-    [InlineData(40, -179.7)]
-    [InlineData(78.2, 15.6)]
-    public void Get_Moon_Times_Reports_Each_Transit_Exactly_Once_Across_Consecutive_Days(double lat, double lng)
+    [InlineData(51.5, -0.1, 0)]
+    [InlineData(-33.9, 151.2, 600)]
+    [InlineData(40, -179.7, -720)]
+    [InlineData(78.2, 15.6, 60)]
+    public void Get_Moon_Times_Reports_Each_Transit_Exactly_Once_Across_Consecutive_Days(double lat, double lng, int utcOffsetMinutes)
     {
         //Arrange
-        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var start = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.FromMinutes(utcOffsetMinutes));
         const int days = 60;
 
         //Act
@@ -186,9 +185,9 @@ public class MoonCalcTests
         AssertEachTransitOnce(moonPhases, x => x.LowerTransit, "lower transit");
     }
 
-    private static void AssertEachTransitOnce(MoonPhase[] moonPhases, Func<MoonPhase, DateTime?> transit, string name)
+    private static void AssertEachTransitOnce(MoonPhase[] moonPhases, Func<MoonPhase, DateTimeOffset?> transit, string name)
     {
-        DateTime? previous = null;
+        DateTimeOffset? previous = null;
         var skipped = 0;
         foreach (var moonPhase in moonPhases)
         {
@@ -210,4 +209,7 @@ public class MoonCalcTests
 
         Assert.InRange(skipped, 1, 3);
     }
+
+    private static DateTimeOffset Utc(int year, int month, int day, int hour = 0, int minute = 0) =>
+        new(year, month, day, hour, minute, 0, TimeSpan.Zero);
 }

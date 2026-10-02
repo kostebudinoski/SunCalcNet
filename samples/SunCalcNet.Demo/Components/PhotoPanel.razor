@@ -1,0 +1,93 @@
+@using SunCalcNet.Demo.Services
+
+<div class="photo-grid">
+    @foreach (var session in new[] { Light.Morning, Light.Evening })
+    {
+        <div class="photo-col">
+            <h3 class="group-title">@session.Title</h3>
+            @foreach (var (window, kind) in Ordered(session))
+            {
+                <div class="light-row">
+                    <i class="light-swatch @kind" aria-hidden="true"></i>
+                    @if (window is null)
+                    {
+                        <span class="light-name">@(kind == "blue" ? "Blue hour" : "Golden hour")</span>
+                        <span class="light-time muted">not today</span>
+                    }
+                    else
+                    {
+                        <span class="light-name">@window.Name</span>
+                        <span class="light-time"><time>@window.Start.ToString("HH:mm")</time>–<time>@window.End.ToString("HH:mm")</time></span>
+                        <CalendarButton Title="@($"{session.Title} {window.Name.ToLowerInvariant()}")" Description="@WindowDescription(window, kind)"
+                                        Place="Place" Day="Day" Start="window.Start" End="window.End" />
+                        <span class="light-meta">
+                            @Duration(window.Length)@if (window.LightFromAzimuth is { } az && kind == "golden") { <text> · light from @az.ToString("0")° @Compass(az)</text> }
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <div class="photo-col">
+        <h3 class="group-title">Tonight</h3>
+        @if (Light.DarkSky.Count > 0)
+        {
+            @foreach (var window in Light.DarkSky)
+            {
+                <div class="light-row">
+                    <i class="light-swatch dark" aria-hidden="true"></i>
+                    <span class="light-name">Dark sky</span>
+                    <span class="light-time"><time>@window.Start.ToString("HH:mm")</time>–<time>@window.End.ToString("HH:mm")</time></span>
+                    <CalendarButton Title="Dark sky for stargazing" Description="Sun more than 18° below the horizon and the moon down."
+                                    Place="Place" Day="Day" Start="window.Start" End="window.End" />
+                    <span class="light-meta">@Duration(window.Length) · sun below −18°, moon down</span>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="light-note">@Light.DarkSkyNote</p>
+        }
+    </div>
+</div>
+
+<div class="photo-now">
+    @if (Light.MoonOpportunity is { } moon)
+    {
+        <p class="photo-tip"><span class="badge">Moon shot</span> @moon</p>
+    }
+    <p class="muted">At <time>@TimeLabel</time>: @ShadowNow</p>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PhotoLight Light { get; set; } = default!;
+    [Parameter, EditorRequired] public Place Place { get; set; } = default!;
+    [Parameter, EditorRequired] public DateOnly Day { get; set; }
+    [Parameter] public double SunAltitude { get; set; }
+    [Parameter] public double SunAzimuth { get; set; }
+    [Parameter] public string TimeLabel { get; set; } = "";
+
+    private string ShadowNow => PhotoLight.ShadowSentence(SunAltitude) is { } shadows
+        ? $"{shadows}, cast toward the {Compass((SunAzimuth + 180) % 360)}."
+        : "the sun is down, so it casts no shadows.";
+
+    // in the order they happen: blue then golden in the morning, golden then blue in the evening
+    private static IEnumerable<(LightWindow? Window, string Kind)> Ordered(LightSession s) =>
+        s.Title == "Morning"
+            ? [(s.BlueHour, "blue"), (s.GoldenHour, "golden")]
+            : [(s.GoldenHour, "golden"), (s.BlueHour, "blue")];
+
+    private static string WindowDescription(LightWindow window, string kind) =>
+        (kind == "golden" ? "Sun between 4° below and 6° above the horizon: warm, soft light." : "Sun 4° to 6° below the horizon: deep blue sky, even light.")
+        + (window.LightFromAzimuth is { } az && kind == "golden" ? $" Light from {az:0}° {Compass(az)}." : "");
+
+    private static string Duration(TimeSpan span) =>
+        span.TotalMinutes < 60 ? $"{(int)Math.Round(span.TotalMinutes)} min" : $"{(int)span.TotalHours} h {span.Minutes} min";
+
+    private static string Compass(double azimuth)
+    {
+        string[] points = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        return points[(int)Math.Round(azimuth / 22.5) % 16];
+    }
+}

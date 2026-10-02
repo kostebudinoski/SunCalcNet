@@ -11,11 +11,12 @@ public struct SunPhase : IEquatable<SunPhase>
     public SunPhaseName Name { get; }
 
     /// <summary>
-    /// Time of the day when the sun phase occurs
+    /// When the sun phase occurs, at the observer's UTC offset (the requested date's offset, or the time zone's
+    /// offset at that moment). Two phases are equal when they occur at the same instant, whatever their offsets.
     /// </summary>
-    public DateTime PhaseTime { get; }
+    public DateTimeOffset PhaseTime { get; }
 
-    public SunPhase(SunPhaseName name, DateTime phaseTime)
+    public SunPhase(SunPhaseName name, DateTimeOffset phaseTime)
     {
         Name = name;
         PhaseTime = phaseTime;

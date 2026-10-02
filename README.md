@@ -16,9 +16,12 @@ The best way to get started is to:
 Usage example
 ==========
 
+All methods take a `DateTimeOffset`. Positions and illumination are for that instant. Sun and moon phases are for
+the observer's **local calendar day** containing it, and every returned time is at the same UTC offset.
+
 Get position of the sun (azimuth and altitude)
 ```csharp
-var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
 var lat = 50.5;
 var lng = 30.5;
 
@@ -29,7 +32,7 @@ Assert.Equal(-0.6888030343391054, sunPosition.Altitude, 14);
 ```
 Get position of the moon (azimuth, altitude, distance and parallactic angle)
 ```csharp
-var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
 var lat = 50.5;
 var lng = 30.5;
 
@@ -42,7 +45,8 @@ Assert.Equal(-0.5923875457617929, moonPosition.ParallacticAngle, 12);
 ```
 Get Sun phases
 ```csharp
-var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+// any time on 5 March in Kyiv (UTC+2); every returned PhaseTime is at +02:00
+var date = new DateTimeOffset(2013, 3, 5, 18, 30, 0, TimeSpan.FromHours(2));
 var lat = 50.5;
 var lng = 30.5;
 
@@ -50,14 +54,14 @@ var sunPhases = SunCalc.GetSunPhases(date, lat, lng).ToList();
 
 foreach (var sunPhase in sunPhases)
 {
-    ...
+    Console.WriteLine($"{sunPhase.Name}: {sunPhase.PhaseTime:HH:mm zzz}"); // Sunrise: 06:33 +02:00 ...
 }
 ```
 Get Sun phases with custom angles
 
 Define your own phase angles (in degrees relative to the horizon) and pass them to `GetSunPhases`. Use `SunPhaseAngle.Default` to compose your angles with the built-in ones.
 ```csharp
-var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
 var lat = 50.5;
 var lng = 30.5;
 
@@ -71,9 +75,18 @@ var angles = SunPhaseAngle.Default.Append(new SunPhaseAngle(-4, "blueHourDawn", 
 
 var allPhases = SunCalc.GetSunPhases(date, lat, lng, angles).ToList();
 ```
+Get Moon rise, set and transit times
+```csharp
+var date = new DateTimeOffset(2026, 9, 30, 0, 0, 0, TimeSpan.FromHours(-4)); // 30 September in Boston (EDT)
+
+var moonPhase = MoonCalc.GetMoonPhase(date, 42.76, -71.04);
+
+// Rise, Set, Transit (highest point) and LowerTransit (lowest point) are DateTimeOffset? at -04:00,
+// null when the event doesn't happen that day; AlwaysUp / AlwaysDown flag days without a rise or set
+```
 Get Moon Illumination
 ```csharp
-var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
 
 var moonIllum = MoonCalc.GetMoonIllumination(date);
 
@@ -82,6 +95,29 @@ Assert.Equal(0.7528035696247392, moonIllum.Phase, 12);
 Assert.Equal(1.6763844401987489, moonIllum.Angle, 12);
 Assert.False(moonIllum.Waxing);
 ```
+
+Which day, and time zones
+==========
+
+`GetSunPhases` and `GetMoonPhase` return the events of the calendar day that `date` falls on at its own offset,
+whatever its time of day: 00:01 and 23:59 give the same day. Use the `TimeZoneInfo` overloads when the
+observer's zone has daylight saving time. They cover the whole local day, which is 23 or 25 hours long when
+the clocks change, and each returned time carries the zone's offset at that moment:
+
+```csharp
+var vienna = TimeZoneInfo.FindSystemTimeZoneById("Europe/Vienna");
+var date = new DateTimeOffset(2026, 10, 25, 12, 0, 0, TimeSpan.FromHours(1)); // the day the clocks go back
+
+var sunPhases = SunCalc.GetSunPhases(date, 48.21, 16.37, vienna);
+var moonPhase = MoonCalc.GetMoonPhase(date, 48.21, 16.37, vienna);
+```
+
+Upgrading from 2.x
+==========
+
+3.0 is a breaking release: sun and moon phases take a `DateTimeOffset` and return `DateTimeOffset` times.
+Calls that pass a `DateTime` to `GetSunPhases` or `GetMoonPhase` no longer compile, so every place that needs a
+decision is flagged. See [Migrating to 3.0](https://github.com/kostebudinoski/SunCalcNet/wiki/Migrating-to-3.0).
 
 About Suncalc.js
 ==========

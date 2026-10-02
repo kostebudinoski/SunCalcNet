@@ -32,6 +32,15 @@
 
     <script>
         window.skyAlmanac = {
+            // hand a generated file (e.g. an .ics calendar event) to the browser as a download
+            download: (fileName, text, mimeType) => {
+                const url = URL.createObjectURL(new Blob([text], { type: mimeType }));
+                const a = Object.assign(document.createElement("a"), { href: url, download: fileName });
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            },
             locate: () => new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
                     reject(new Error("Geolocation is not available"));

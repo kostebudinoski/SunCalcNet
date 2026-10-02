@@ -6,26 +6,26 @@ namespace SunCalcNet.Model;
 public struct MoonPhase : IEquatable<MoonPhase>
 {
     /// <summary>
-    /// Moonrise time as Date
+    /// Moonrise at the observer's UTC offset, or null if the moon doesn't rise during the day.
     /// </summary>
-    public DateTime? Rise { get; }
+    public DateTimeOffset? Rise { get; }
 
     /// <summary>
-    /// Moonset time as Date
+    /// Moonset at the observer's UTC offset, or null if the moon doesn't set during the day.
     /// </summary>
-    public DateTime? Set { get; }
+    public DateTimeOffset? Set { get; }
 
     /// <summary>
     /// Upper meridian transit, when the moon is at its highest point ("moon overhead").
     /// Reported even when the moon is below the horizon; null on the ~1 day a month the day misses it.
     /// </summary>
-    public DateTime? Transit { get; }
+    public DateTimeOffset? Transit { get; }
 
     /// <summary>
     /// Lower meridian transit, when the moon is at its lowest point ("moon underfoot").
     /// Reported even when the moon is below the horizon; null on the ~1 day a month the day misses it.
     /// </summary>
-    public DateTime? LowerTransit { get; }
+    public DateTimeOffset? LowerTransit { get; }
 
     /// <summary>
     /// True if the moon never rises/sets and is always above the horizon during the day
@@ -41,7 +41,7 @@ public struct MoonPhase : IEquatable<MoonPhase>
     /// <param name="set">Moonset time, or null if the moon doesn't set during the day.</param>
     /// <param name="maxHeight">Highest moon height above the rise/set horizon sampled over the day;
     /// decides <see cref="AlwaysUp"/> / <see cref="AlwaysDown"/> when there's neither rise nor set.</param>
-    public MoonPhase(DateTime? rise, DateTime? set, double maxHeight)
+    public MoonPhase(DateTimeOffset? rise, DateTimeOffset? set, double maxHeight)
         : this(rise, set, null, null, maxHeight)
     {
     }
@@ -52,7 +52,7 @@ public struct MoonPhase : IEquatable<MoonPhase>
     /// <param name="lowerTransit">Lower meridian transit, or null if it doesn't occur during the day.</param>
     /// <param name="maxHeight">Highest moon height above the rise/set horizon sampled over the day;
     /// decides <see cref="AlwaysUp"/> / <see cref="AlwaysDown"/> when there's neither rise nor set.</param>
-    public MoonPhase(DateTime? rise, DateTime? set, DateTime? transit, DateTime? lowerTransit, double maxHeight)
+    public MoonPhase(DateTimeOffset? rise, DateTimeOffset? set, DateTimeOffset? transit, DateTimeOffset? lowerTransit, double maxHeight)
     {
         Rise = rise;
         Set = set;

@@ -89,6 +89,13 @@
                     }
                 </h1>
                 <p class="lede">@DaylightSentence()</p>
+                @if (photo?.Summary(new DateTimeOffset(DateTime.SpecifyKind(time, DateTimeKind.Utc))) is { } best)
+                {
+                    <p class="best-light">
+                        <i class="light-swatch golden" aria-hidden="true"></i>
+                        <span><strong>@best.Label:</strong> @best.Text. <a href="#photo-title" class="link-btn">Plan the shot →</a></span>
+                    </p>
+                }
                 <p class="meta">
                     Times in @day.Zone.Id (@day.UtcOffsetLabel(time)) · @F(day.Place.Lat, 4)°, @F(day.Place.Lng, 4)°
                 </p>
@@ -182,6 +189,28 @@
             </div>
         </div>
 
+        @if (photo is not null)
+        {
+            <section class="card photo" aria-labelledby="photo-title">
+                <header class="card-head">
+                    <h2 id="photo-title">Light for photographers</h2>
+                    <p>Blue and golden hours by the photographers' definitions, using custom <code>SunPhaseAngle</code>s at −6°, −4° and +6°; where the light comes from; and when the sky is truly dark.</p>
+                </header>
+                <PhotoPanel Light="photo" Place="day.Place" Day="day.Date" SunAltitude="position.SunAltitude" SunAzimuth="position.SunAzimuth" TimeLabel="@Local(time)" />
+            </section>
+        }
+
+        @if (upcoming.Count > 0)
+        {
+            <section class="card coming-up" aria-labelledby="upcoming-title">
+                <header class="card-head">
+                    <h2 id="upcoming-title">Coming up in @day.Place.Name</h2>
+                    <p>The next moon phases, seasons, clock changes and light records after @day.Date.ToString("d MMMM", CultureInfo.InvariantCulture), all found with the library.</p>
+                </header>
+                <UpcomingList Events="upcoming" From="day.Date" Place="day.Place" OnSelect="ShowDay" />
+            </section>
+        }
+
         <footer class="footer">
             <span>Built with <a href="https://github.com/kostebudinoski/SunCalcNet">SunCalcNet</a>, a .NET port of <a href="https://github.com/mourner/suncalc">SunCalc</a>. Vibe coded with AI.</span>
             <span>Calculated in your browser in @F(computeMs, 0) ms</span>
@@ -204,6 +233,9 @@
 
     private AlmanacDay? day;
     private SkyPosition? position;
+    private IReadOnlyList<UpcomingEvent> upcoming = [];
+    private PhotoLight? photo;
+    private (string Place, double Lat, double Lng, DateOnly Date)? upcomingFor;
 
     // e.g. ?place=Sydney&date=2026-06-21 opens a specific place and day
     [SupplyParameterFromQuery(Name = "place")] public string? QueryPlace { get; set; }
@@ -297,7 +329,24 @@
         day = new AlmanacDay(CurrentPlace(), date);
         minute = Math.Clamp(minute, 0, day.LengthMinutes - 1);
         UpdatePosition();
+
+        // a year of days and a month of moon samples: only when the place or day changes, not while scrubbing
+        var key = (day.Place.Name, day.Place.Lat, day.Place.Lng, day.Date);
+        if (upcomingFor != key)
+        {
+            upcoming = Upcoming.Find(day.Place, day.Zone, day.Date);
+            photo = new PhotoLight(day);
+            upcomingFor = key;
+        }
         computeMs = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+    }
+
+    private async Task ShowDay(DateOnly value)
+    {
+        date = value;
+        minute = 12 * 60;
+        Recalculate();
+        await JS.InvokeVoidAsync("scrollTo", new { top = 0, behavior = "smooth" });
     }
 
     private void OnMinuteChanged(double value)

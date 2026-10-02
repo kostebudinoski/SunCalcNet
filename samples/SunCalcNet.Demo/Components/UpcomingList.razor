@@ -1,0 +1,78 @@
+@using System.Globalization
+@using SunCalcNet.Demo.Services
+
+<ol class="upcoming">
+    @foreach (var e in Events)
+    {
+        <li class="@(e.Highlight ? "highlight" : "")">
+            <span class="up-icon" aria-hidden="true">
+                @if (e.Kind == UpcomingKind.Moon)
+                {
+                    <MoonDisc Fraction="e.MoonFraction" Waxing="e.MoonWaxing" Southern="Southern" />
+                }
+                else
+                {
+                    <svg viewBox="0 0 24 24" class="glyph @e.Kind.ToString().ToLowerInvariant()">
+                        @switch (e.Kind)
+                        {
+                            case UpcomingKind.Season:
+                                <circle cx="12" cy="12" r="4.5" />
+                                <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" />
+                                break;
+                            case UpcomingKind.Light:
+                                <path d="M6.5 16a5.5 5.5 0 0 1 11 0" />
+                                <path d="M3 16h18M12 4v3.5M5.6 7.6l1.8 1.8M18.4 7.6l-1.8 1.8" />
+                                <path d="M9 20h6" />
+                                break;
+                            case UpcomingKind.Clock:
+                                <circle cx="12" cy="12" r="8.5" />
+                                <path d="M12 7.5V12l3 2" />
+                                break;
+                            default:
+                                <path d="M3 15h18" />
+                                <path d="M7 15a5 5 0 0 1 10 0" />
+                                <path d="@(e.SunComingUp ? "M12 9V4M9.5 6.5 12 4l2.5 2.5" : "M12 3v5M9.5 5.5 12 8l2.5-2.5")" />
+                                break;
+                        }
+                    </svg>
+                }
+            </span>
+            <div class="up-body">
+                <p class="up-title">@e.Title @if (e.Highlight) { <span class="badge">Supermoon</span> }</p>
+                <p class="up-detail">@e.Detail</p>
+            </div>
+            <div class="up-when">
+                <time datetime="@e.When.ToString("O")">@e.Day.ToString("ddd d MMM", CultureInfo.InvariantCulture)</time>
+                <small>@Relative(e.Day)@(e.ShowTime ? " · " + e.When.ToString("HH:mm") : "")</small>
+                <span class="up-actions">
+                    <CalendarButton Title="@e.Title" Description="@e.Detail" Place="Place" Day="e.Day"
+                                    Start="@(e.Kind is UpcomingKind.Clock or UpcomingKind.Polar ? null : e.When)" />
+                    <button type="button" class="link-btn" @onclick="() => OnSelect.InvokeAsync(e.Day)"
+                            aria-label="@($"Show {e.Day.ToString("d MMMM", CultureInfo.InvariantCulture)}")">Show day →</button>
+                </span>
+            </div>
+        </li>
+    }
+</ol>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<UpcomingEvent> Events { get; set; } = [];
+    [Parameter, EditorRequired] public DateOnly From { get; set; }
+    [Parameter, EditorRequired] public Place Place { get; set; } = default!;
+
+    private bool Southern => Place.Lat < 0;
+    [Parameter] public EventCallback<DateOnly> OnSelect { get; set; }
+
+    private string Relative(DateOnly day)
+    {
+        var days = day.DayNumber - From.DayNumber;
+        return days switch
+        {
+            <= 0 => "today",
+            1 => "tomorrow",
+            < 14 => $"in {days} days",
+            < 60 => $"in {(int)Math.Round(days / 7.0)} weeks",
+            _ => $"in {(int)Math.Round(days / 30.4)} months",
+        };
+    }
+}

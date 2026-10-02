@@ -31,4 +31,11 @@ internal static class Constants
     /// Julian date for January 1, 2000 (J2000 epoch).
     /// </summary>
     internal const double J2000 = 2451545;
+
+    /// <summary>
+    /// Compile error for the removed 2.x <see cref="System.DateTime"/> overloads of GetSunPhases and GetMoonPhase.
+    /// </summary>
+    internal const string DateTimeOverloadRemoved =
+        "SunCalcNet 3.0 takes a DateTimeOffset and returns the observer's local calendar day at its offset. " +
+        "See https://github.com/kostebudinoski/SunCalcNet/wiki/Migrating-to-3.0";
 }

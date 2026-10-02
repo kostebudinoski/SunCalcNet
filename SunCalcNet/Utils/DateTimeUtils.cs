@@ -18,6 +18,11 @@ internal static class DateTimeUtils
         return ToJulianDate(date) - Constants.J2000;
     }
 
+    public static double ToDaysSinceJ2000(this DateTimeOffset date)
+    {
+        return date.UtcDateTime.ToDaysSinceJ2000();
+    }
+
     public static DateTime HoursLater(this DateTime date, double hours)
     {
         return date.AddHours(hours);

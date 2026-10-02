@@ -115,13 +115,13 @@ public sealed class AlmanacDay
         var localMidnight = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
         StartUtc = TimeZoneInfo.ConvertTimeToUtc(localMidnight, Zone);
         EndUtc = TimeZoneInfo.ConvertTimeToUtc(localMidnight.AddDays(1), Zone);
-        var localNoonUtc = TimeZoneInfo.ConvertTimeToUtc(localMidnight.AddHours(12), Zone);
+        var localNoon = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(localMidnight.AddHours(12), Zone));
 
-        // anchoring at local noon makes GetSunPhases resolve the solar day of this calendar day
-        var phases = SunCalc.GetSunPhases(localNoonUtc, place.Lat, place.Lng).ToList();
+        // the time zone overloads return this calendar day in the zone, with DST-correct offsets
+        var phases = SunCalc.GetSunPhases(localNoon, place.Lat, place.Lng, Zone).ToList();
         SunEvents = phases
             .OrderBy(x => x.PhaseTime)
-            .Select(x => new SunEvent(x.Name, x.PhaseTime, PhaseColors.GetValueOrDefault(x.Name, "#ffffff")))
+            .Select(x => new SunEvent(x.Name, x.PhaseTime.UtcDateTime, PhaseColors.GetValueOrDefault(x.Name, "#ffffff")))
             .ToList();
         MissingSunEvents = SunPhaseAngle.Default
             .SelectMany(x => new[] { x.RiseName, x.SetName })
@@ -137,16 +137,20 @@ public sealed class AlmanacDay
 
         Samples = samples;
         DayLength = GetDayLength(phases);
-        var yesterday = GetDayLength(SunCalc.GetSunPhases(localNoonUtc.AddDays(-1), place.Lat, place.Lng).ToList());
+        var yesterday = GetDayLength(SunCalc.GetSunPhases(localNoon.AddDays(-1), place.Lat, place.Lng, Zone).ToList());
         DayLengthChange = DayLength - yesterday;
-        Moon = GetMoonEvents(samples);
-        Illumination = MoonCalc.GetMoonIllumination(localNoonUtc);
+
+        var moon = MoonCalc.GetMoonPhase(localNoon, place.Lat, place.Lng, Zone);
+        Moon = new MoonEvents(moon.Rise?.UtcDateTime, moon.Set?.UtcDateTime, moon.Transit?.UtcDateTime,
+            moon.LowerTransit?.UtcDateTime, moon.AlwaysUp, moon.AlwaysDown);
+        Illumination = MoonCalc.GetMoonIllumination(localNoon);
     }
 
     public SkyPosition PositionAt(DateTime utc)
     {
-        var sun = SunCalc.GetSunPosition(utc, Place.Lat, Place.Lng);
-        var moon = MoonCalc.GetMoonPosition(utc, Place.Lat, Place.Lng);
+        var instant = new DateTimeOffset(DateTime.SpecifyKind(utc, DateTimeKind.Utc));
+        var sun = SunCalc.GetSunPosition(instant, Place.Lat, Place.Lng);
+        var moon = MoonCalc.GetMoonPosition(instant, Place.Lat, Place.Lng);
         return new SkyPosition(sun.Altitude * Deg, ToNorthAzimuth(sun.Azimuth), moon.Altitude * Deg, ToNorthAzimuth(moon.Azimuth), moon.Distance);
     }
 
@@ -189,31 +193,6 @@ public sealed class AlmanacDay
     }
 
     public SunEvent? Find(SunPhaseName name) => SunEvents.FirstOrDefault(x => x.Name == name);
-
-    /// <summary>
-    /// GetMoonPhase scans a UTC day (until utcOffset lands in 2.1.0), so scan the UTC days the local day
-    /// overlaps and keep the events that fall inside it.
-    /// </summary>
-    private MoonEvents GetMoonEvents(IReadOnlyList<SkySample> samples)
-    {
-        var scans = new List<MoonPhase>();
-        for (var day = StartUtc.Date; day < EndUtc; day = day.AddDays(1))
-        {
-            scans.Add(MoonCalc.GetMoonPhase(DateTime.SpecifyKind(day, DateTimeKind.Utc), Place.Lat, Place.Lng));
-        }
-
-        DateTime? First(Func<MoonPhase, DateTime?> pick) => scans
-            .Select(pick)
-            .Where(x => x.HasValue && IsToday(x.Value))
-            .OrderBy(x => x)
-            .FirstOrDefault();
-
-        var rise = First(x => x.Rise);
-        var set = First(x => x.Set);
-        var up = rise is null && set is null && samples.All(x => x.MoonAltitude > 0);
-        var down = rise is null && set is null && !up;
-        return new MoonEvents(rise, set, First(x => x.Transit), First(x => x.LowerTransit), up, down);
-    }
 
     // the library's azimuth is south-based radians, clockwise via west; the page uses compass degrees
     private static double ToNorthAzimuth(double azimuth) => ((azimuth * Deg + 180) % 360 + 360) % 360;

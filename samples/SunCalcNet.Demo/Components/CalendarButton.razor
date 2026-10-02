@@ -1,0 +1,31 @@
+@using SunCalcNet.Demo.Services
+@inject IJSRuntime JS
+
+@* small icon button that downloads one calendar event; the file is built in the browser, nothing is sent anywhere *@
+<button type="button" class="cal-btn" @onclick="Download" aria-label="@($"Add {Title} to calendar")" title="Add to calendar">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+        <path d="M3.5 9.5h17M8 3v4M16 3v4M12 12.5v5M9.5 15h5" />
+    </svg>
+</button>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string Description { get; set; } = "";
+    [Parameter, EditorRequired] public Place Place { get; set; } = default!;
+    [Parameter, EditorRequired] public DateOnly Day { get; set; }
+
+    /// <summary>Start of a timed event; leave null for an all-day event on <see cref="Day"/>.</summary>
+    [Parameter] public DateTimeOffset? Start { get; set; }
+    [Parameter] public DateTimeOffset? End { get; set; }
+
+    private async Task Download()
+    {
+        var location = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{Place.Name} ({Place.Lat:0.####}, {Place.Lng:0.####})");
+        var description = $"{Description}\nFrom Sky Almanac, calculated with SunCalcNet.";
+        var ics = Start is { } start
+            ? CalendarFile.Timed(Title, description, location, start, End ?? start.AddMinutes(30))
+            : CalendarFile.AllDay(Title, description, location, Day);
+        await JS.InvokeVoidAsync("skyAlmanac.download", CalendarFile.FileName(Title, Day), ics, "text/calendar");
+    }
+}

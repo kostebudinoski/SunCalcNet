@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Xunit;
 
 namespace SunCalcNet.Tests;
@@ -12,7 +13,7 @@ public class SunCalcTests
     public void Get_Sun_Position_Returns_Azimuth_And_Altitude_For_The_Given_Time_And_Location()
     {
         //Arrange
-        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
         var lat = 50.5;
         var lng = 30.5;
 
@@ -46,7 +47,7 @@ public class SunCalcTests
             new(SunPhaseName.GoldenHour, new DateTime(2013, 3, 5, 15, 2, 14, DateTimeKind.Utc)),
         };
 
-        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
         var lat = 50.5;
         var lng = 30.5;
 
@@ -68,7 +69,7 @@ public class SunCalcTests
     public void Get_Sun_Phases_Works_At_North_Pole()
     {
         //Arrange
-        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
         var lat = 90;
         var lng = 135;
 
@@ -91,7 +92,7 @@ public class SunCalcTests
             new(SunPhaseName.Sunset, new DateTime(2013, 3, 5, 15, 56, 8, DateTimeKind.Utc))
         };
 
-        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
         var lat = 50.5;
         var lng = 30.5;
         var height = 2000;
@@ -114,7 +115,7 @@ public class SunCalcTests
     public void Get_Sun_Phases_Uses_The_Supplied_Custom_Phase_Angles()
     {
         //Arrange
-        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
         var lat = 50.5;
         var lng = 30.5;
         var customAngles = new[] { new SunPhaseAngle(-4, "blueHourDawn", "blueHourDusk") };
@@ -135,7 +136,7 @@ public class SunCalcTests
     public void Get_Sun_Phases_Can_Combine_Default_And_Custom_Phase_Angles()
     {
         //Arrange
-        var date = new DateTime(2013, 3, 5, 0, 0, 0, DateTimeKind.Utc);
+        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
         var lat = 50.5;
         var lng = 30.5;
         var angles = SunPhaseAngle.Default.Append(new SunPhaseAngle(-4, "blueHourDawn", "blueHourDusk"));
@@ -148,30 +149,44 @@ public class SunCalcTests
         Assert.Contains(sunPhases, x => x.Name == SunPhaseName.Sunrise);
         Assert.Contains(sunPhases, x => x.Name == SunPhaseName.Custom("blueHourDawn"));
     }
-    
-    [Theory]
-    [InlineData(-180)]
-    [InlineData(-179.9)]
-    [InlineData(-179.7)]
-    [InlineData(-179.676)]
-    [InlineData(-179.6)]
-    [InlineData(-90)]
-    [InlineData(0)]
-    [InlineData(90)]
-    [InlineData(179.9)]
-    [InlineData(180)]
-    public void Get_Sun_Phases_Resolves_The_Solar_Day_Containing_The_Date_At_Every_Longitude(double lng)
+
+    [Fact]
+    public void Get_Sun_Phases_Returns_Times_At_The_Offset_Of_The_Given_Date()
     {
         //Arrange
-        var lat = 40;
-        var date = new DateTime(2026, 8, 19, 12, 0, 0, DateTimeKind.Utc).AddHours(-lng / 15); // local solar noon there
+        var utc = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
+        var kyiv = new DateTimeOffset(2013, 3, 5, 18, 30, 0, TimeSpan.FromHours(2));
+        var lat = 50.5;
+        var lng = 30.5;
 
         //Act
-        var sunPhases = SunCalc.GetSunPhases(date, lat, lng).ToList();
+        var utcPhases = SunCalc.GetSunPhases(utc, lat, lng).ToList();
+        var kyivPhases = SunCalc.GetSunPhases(kyiv, lat, lng).ToList();
 
         //Assert
-        var solarNoon = sunPhases.First(x => x.Name == SunPhaseName.SolarNoon).PhaseTime;
-        var offsetHours = (solarNoon - date).TotalHours;
-        Assert.True(Math.Abs(offsetHours) < 1, $"solar noon {solarNoon:O} is {offsetHours:F2} h from local solar noon");
+        Assert.All(kyivPhases, x => Assert.Equal(TimeSpan.FromHours(2), x.PhaseTime.Offset));
+        Assert.Equal(utcPhases, kyivPhases);
+        var sunrise = kyivPhases.First(x => x.Name == SunPhaseName.Sunrise);
+        Assert.Equal("2013-03-05 06:33:31 +02:00", sunrise.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss zzz"));
+    }
+
+    [Fact]
+    public void DateTime_Overloads_Of_Sun_And_Moon_Phases_Are_Compile_Errors()
+    {
+        //Arrange
+        var methods = typeof(SunCalc).GetMethods().Concat(typeof(MoonCalc).GetMethods())
+            .Where(m => m.Name is nameof(SunCalc.GetSunPhases) or nameof(MoonCalc.GetMoonPhase))
+            .Where(m => m.GetParameters()[0].ParameterType == typeof(DateTime))
+            .ToList();
+
+        //Assert
+        Assert.Equal(3, methods.Count);
+        Assert.All(methods, m =>
+        {
+            var obsolete = m.GetCustomAttribute<ObsoleteAttribute>();
+            Assert.NotNull(obsolete);
+            Assert.True(obsolete.IsError, $"{m} must fail to compile, not just warn");
+            Assert.Contains("Migrating-to-3.0", obsolete.Message);
+        });
     }
 }
