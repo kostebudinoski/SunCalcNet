@@ -1,0 +1,87 @@
+@using System.Globalization
+@using SunCalcNet.Demo.Services
+
+@* Side view to scale: your window, the building opposite, the angle its roof hides, and the midday sun on the
+   shortest day. Equal scales on both axes, so the angles drawn are the real ones. *@
+<svg class="window-diagram" viewBox="0 0 @W @H" role="img" aria-label="@Label">
+    <line x1="0" x2="@W" y1="@Ground" y2="@Ground" class="d-ground" />
+
+    @* your building, with the window marked *@
+    <rect x="@F(MineX - 46)" y="@F(Y(MyTop))" width="46" height="@F(Ground - Y(MyTop))" class="d-mine" />
+    <rect x="@F(MineX - 6)" y="@F(Y(Setup.WindowHeight) - 7)" width="8" height="14" class="d-window" />
+
+    @* the building opposite *@
+    <rect x="@F(OppositeX)" y="@F(Y(Setup.ObstacleHeight))" width="@F(OppositeWidth)" height="@F(Ground - Y(Setup.ObstacleHeight))" class="d-opposite" />
+
+    @* sight line from the window over the roof, and the angle it makes with the horizontal *@
+    @if (Setup.ObstacleAngle > 0)
+    {
+        <line x1="@F(MineX)" y1="@F(Y(Setup.WindowHeight))" x2="@F(Ray(Setup.ObstacleAngle).X)" y2="@F(Ray(Setup.ObstacleAngle).Y)" class="d-sight" />
+        <line x1="@F(MineX)" y1="@F(Y(Setup.WindowHeight))" x2="@F(MineX + 70)" y2="@F(Y(Setup.WindowHeight))" class="d-level" />
+        <path d="@Arc(Setup.ObstacleAngle, 44)" class="d-arc" />
+        <g><text x="@F(MineX + 50)" y="@F(Y(Setup.WindowHeight) - 6)" class="d-label">@Setup.ObstacleAngle.ToString("0")°</text></g>
+    }
+
+    @* the midday sun on the shortest day, coming in from the far side *@
+    @if (NoonAltitude > 0)
+    {
+        var sun = Ray(NoonAltitude, 0.92);
+        <line x1="@F(sun.X)" y1="@F(sun.Y)" x2="@F(MineX)" y2="@F(Y(Setup.WindowHeight))" class="@(Clears ? "d-sun" : "d-sun blocked")" />
+        <circle cx="@F(sun.X)" cy="@F(sun.Y)" r="9" class="d-sun-disc" />
+    }
+
+    @* dimensions *@
+    <g><text x="@F(MineX - 52)" y="@F(Y(Setup.WindowHeight) + 4)" class="d-dim" text-anchor="end">@Setup.WindowHeight.ToString("0") m</text></g>
+    <g><text x="@F(OppositeX + OppositeWidth + 6)" y="@F(Y(Setup.ObstacleHeight) + 12)" class="d-dim">@Setup.ObstacleHeight.ToString("0") m</text></g>
+    <g><text x="@F((MineX + OppositeX) / 2)" y="@F(Ground + 16)" class="d-dim" text-anchor="middle">@Setup.ObstacleDistance.ToString("0") m</text></g>
+</svg>
+
+@code {
+    private const double W = 560;
+    private const double H = 240;
+    private const double Ground = 206;
+    private const double MineX = 110;
+    private const double OppositeWidth = 70;
+
+    [Parameter, EditorRequired] public WindowSetup Setup { get; set; } = default!;
+
+    /// <summary>The sun's altitude at solar noon on the shortest day, in degrees.</summary>
+    [Parameter] public double NoonAltitude { get; set; }
+
+    [Parameter] public string DayLabel { get; set; } = "";
+
+    private bool Clears => NoonAltitude > Setup.ObstacleAngle;
+
+    private string Label =>
+        $"Side view: window {Setup.WindowHeight:0} m up, building {Setup.ObstacleHeight:0} m tall and {Setup.ObstacleDistance:0} m away, " +
+        $"hiding the sky up to {Setup.ObstacleAngle:0}°; midday sun on {DayLabel} at {NoonAltitude:0}° {(Clears ? "clears it" : "is blocked")}";
+
+    private double MyTop => Setup.WindowHeight + 5;
+
+    // one scale for both axes so angles stay true; fit the taller building and the gap between them
+    private double Scale => Math.Min(
+        (Ground - 34) / Math.Max(Math.Max(Setup.ObstacleHeight, MyTop), 1),
+        (W - MineX - OppositeWidth - 50) / Math.Max(Setup.ObstacleDistance, 1));
+
+    private double OppositeX => MineX + Setup.ObstacleDistance * Scale;
+
+    private double Y(double meters) => Ground - meters * Scale;
+
+    // a point along a line leaving the window at the given angle, reaching most of the way across the drawing
+    private (double X, double Y) Ray(double degrees, double reach = 1)
+    {
+        var a = degrees * Math.PI / 180;
+        var startY = Y(Setup.WindowHeight);
+        var length = Math.Min((W - MineX - 10) / Math.Cos(a), (startY - 12) / Math.Max(Math.Sin(a), 0.01)) * reach;
+        return (MineX + length * Math.Cos(a), startY - length * Math.Sin(a));
+    }
+
+    private string Arc(double degrees, double radius)
+    {
+        var a = degrees * Math.PI / 180;
+        var y = Y(Setup.WindowHeight);
+        return $"M {F(MineX + radius)} {F(y)} A {F(radius)} {F(radius)} 0 0 0 {F(MineX + radius * Math.Cos(a))} {F(y - radius * Math.Sin(a))}";
+    }
+
+    private static string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+}

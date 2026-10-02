@@ -19,6 +19,8 @@
         </div>
     </div>
 
+    <SiteNav Current="home" Place="@(day?.Place.Name ?? placeName)" Date="date" />
+
     <div class="toolbar">
         <label class="field">
             <span class="field-label">Place</span>
@@ -199,6 +201,21 @@
                 <PhotoPanel Light="photo" Place="day.Place" Day="day.Date" SunAltitude="position.SunAltitude" SunAzimuth="position.SunAzimuth" TimeLabel="@Local(time)" />
             </section>
         }
+
+        <a class="card teaser" href="@($"window/?place={Uri.EscapeDataString(day.Place.Name)}&date={day.Date:yyyy-MM-dd}")">
+            <svg class="teaser-icon" viewBox="0 0 48 48" aria-hidden="true">
+                <rect x="6" y="14" width="14" height="28" />
+                <rect x="13" y="22" width="5" height="7" class="glass" />
+                <rect x="30" y="22" width="12" height="20" />
+                <circle cx="38" cy="9" r="4" class="sun" />
+                <path d="M35 11 18 25" class="ray" />
+            </svg>
+            <span>
+                <strong>Sunlight at your window</strong>
+                <span class="muted">Buying or renting? See how many hours of direct sun a window gets in @day.Place.Name, even on the shortest day.</span>
+            </span>
+            <span class="link-btn">Open the calculator →</span>
+        </a>
 
         @if (upcoming.Count > 0)
         {

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Window sunlight calculator: how many hours of sun will a flat get? · Sky Almanac</title>
+    <meta name="description" content="How many hours of direct sun will a flat's window get? Enter which way it faces and the building opposite, and see the sunlight on any day, including the shortest day of the year. Free, in your browser." />
+    <meta name="keywords" content="sunlight calculator, window sunlight, hours of sun, apartment sunlight, flat orientation, building shadow, winter sun, south facing window" />
+    <meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121317" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://kostebudinoski.dev/SunCalcNet/window/" />
+    <link rel="manifest" href="manifest.webmanifest" />
+
+    <!-- link previews (WhatsApp, Slack, LinkedIn, X, Facebook...) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sky Almanac" />
+    <meta property="og:title" content="How much sun will this window get?" />
+    <meta property="og:description" content="Window sunlight calculator: hours of direct sun for any window and the building opposite, even on the shortest day." />
+    <meta property="og:url" content="https://kostebudinoski.dev/SunCalcNet/window/" />
+    <meta property="og:image" content="https://kostebudinoski.dev/SunCalcNet/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Sky Almanac showing sunrise 05:59 and sunset 16:36 in Skopje with the day's sun and moon curve" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Window sunlight calculator",
+        "url": "https://kostebudinoski.dev/SunCalcNet/window/",
+        "description": "How many hours of direct sun will a flat's window get? Enter which way it faces and the building opposite, and see the sunlight on any day, including the shortest day of the year. Free, in your browser.",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any (runs in the browser)",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "isPartOf": { "@type": "WebSite", "name": "Sky Almanac", "url": "https://kostebudinoski.dev/SunCalcNet/" }
+    }
+    </script>
+    <base href="../" />
+    <link rel="preload" id="webassembly" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <script type="importmap"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- readable before the app loads, and by search engines; the app replaces it with the same information, live -->
+        <div class="boot">
+            <div class="boot-orbit"><span></span></div>
+            <p>Loading the sky…</p>
+        </div>
+        <section class="seo-intro">
+            <h1>Window sunlight calculator: how much sun will this window get?</h1>
+            <p>Buying or renting a flat? Enter which way the window faces, how high it is, and how tall and how far away the
+                building opposite is. See the hours of direct sun on any day, and on the shortest day of the year, when it matters most.</p>
+            <ul>
+                <li><strong>Direction-aware:</strong> the sun only shines in when it's in front of the window, not behind the wall.</li>
+                <li><strong>Shows what the building opposite takes away,</strong> compared with an open view.</li>
+                <li><strong>A side-view drawing</strong> of your window, the roofline angle and the midday winter sun.</li>
+            </ul>
+            <p>Free, with no sign-up, calculated in your browser by <a href="https://github.com/kostebudinoski/SunCalcNet">SunCalcNet</a>.
+                <a href="../">See today's sunrise, sunset and golden hour →</a></p>
+        </section>
+    </div>
+
+    <div id="blazor-error-ui">
+        Something went wrong.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <script>
+        window.skyAlmanac = {
+            // hand a generated file (e.g. an .ics calendar event) to the browser as a download
+            download: (fileName, text, mimeType) => {
+                const url = URL.createObjectURL(new Blob([text], { type: mimeType }));
+                const a = Object.assign(document.createElement("a"), { href: url, download: fileName });
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            },
+            locate: () => new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("Geolocation is not available"));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    p => resolve([p.coords.latitude, p.coords.longitude]),
+                    e => reject(new Error(e.message)),
+                    { timeout: 10000 });
+            })
+        };
+    </script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+</body>
+
+</html>

@@ -1,0 +1,14 @@
+@* top-bar navigation between the pages; carries the place and date over so switching keeps your view *@
+<nav class="site-nav" aria-label="Pages">
+    <a href="@Link("./")" class="@(Current == "home" ? "active" : "")" aria-current="@(Current == "home" ? "page" : null)">Today's sky</a>
+    <a href="@Link("window/")" class="@(Current == "window" ? "active" : "")" aria-current="@(Current == "window" ? "page" : null)">Window sunlight</a>
+</nav>
+
+@code {
+    /// <summary>"home" or "window": the page being shown.</summary>
+    [Parameter, EditorRequired] public string Current { get; set; } = "";
+    [Parameter, EditorRequired] public string Place { get; set; } = "";
+    [Parameter] public DateOnly Date { get; set; }
+
+    private string Link(string path) => $"{path}?place={Uri.EscapeDataString(Place)}&date={Date:yyyy-MM-dd}";
+}

@@ -1,0 +1,98 @@
+@page "/window"
+@using System.Globalization
+@using SunCalcNet.Demo.Components
+@using SunCalcNet.Demo.Services
+
+<PageTitle>@($"Window sunlight calculator for {day.Place.Name} · Sky Almanac")</PageTitle>
+
+<header class="topbar">
+    <a class="brand" href="@($"./?place={Uri.EscapeDataString(day.Place.Name)}&date={date:yyyy-MM-dd}")">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a10 10 0 0 1 0 20z" />
+        </svg>
+        <div>
+            <strong>Sky Almanac</strong>
+            <small>SunCalcNet demo</small>
+        </div>
+    </a>
+
+    <SiteNav Current="window" Place="@day.Place.Name" Date="date" />
+
+    <div class="toolbar">
+        <label class="field">
+            <span class="field-label">Place</span>
+            <select value="@placeName" @onchange="OnPlaceChanged">
+                @foreach (var p in AlmanacDay.Places)
+                {
+                    <option value="@p.Name">@p.Name</option>
+                }
+            </select>
+        </label>
+        <div class="field">
+            <span class="field-label" id="window-date-label">Date</span>
+            <div class="date-nav" role="group" aria-labelledby="window-date-label">
+                <button type="button" class="icon-btn" @onclick="() => ShiftDay(-1)" aria-label="Previous day">‹</button>
+                <input type="date" @bind="date" @bind:after="Recalculate" aria-label="Date" />
+                <button type="button" class="icon-btn" @onclick="() => ShiftDay(1)" aria-label="Next day">›</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="summary-main window-hero">
+        <p class="overline">@day.Place.Name · @day.Date.ToString("dddd d MMMM yyyy", CultureInfo.InvariantCulture)</p>
+        <h1 class="headline"><span>How much sun will this window get?</span></h1>
+        <p class="lede">Buying or renting a flat? Tell us which way the window faces and what's across the street, and see the hours of
+            direct sun on any day, including the shortest day of the year, when it matters most.</p>
+    </section>
+
+    <section class="card window-sun" aria-label="Window sunlight calculator">
+        <WindowSunPanel Day="day" />
+    </section>
+
+    <footer class="footer">
+        <span>Built with <a href="https://github.com/kostebudinoski/SunCalcNet">SunCalcNet</a>, a .NET port of <a href="https://github.com/mourner/suncalc">SunCalc</a>. Vibe coded with AI.</span>
+        <a href="@($"./?place={Uri.EscapeDataString(day.Place.Name)}&date={date:yyyy-MM-dd}")">Today's sky in @day.Place.Name →</a>
+    </footer>
+</main>
+
+@code {
+    private string placeName = "Copenhagen";
+    private DateOnly date;
+    private AlmanacDay day = default!;
+
+    [SupplyParameterFromQuery(Name = "place")] public string? QueryPlace { get; set; }
+    [SupplyParameterFromQuery(Name = "date")] public string? QueryDate { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (AlmanacDay.Places.FirstOrDefault(x => string.Equals(x.Name, QueryPlace, StringComparison.OrdinalIgnoreCase)) is { } queried)
+        {
+            placeName = queried.Name;
+        }
+
+        var zone = AlmanacDay.FindZone(Place.TimeZoneId);
+        date = DateOnly.TryParseExact(QueryDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var queriedDate)
+            ? queriedDate
+            : DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zone));
+        Recalculate();
+    }
+
+    private Place Place => AlmanacDay.Places.First(x => x.Name == placeName);
+
+    private void OnPlaceChanged(ChangeEventArgs e)
+    {
+        placeName = e.Value?.ToString() ?? placeName;
+        Recalculate();
+    }
+
+    private void ShiftDay(int days)
+    {
+        date = date.AddDays(days);
+        Recalculate();
+    }
+
+    private void Recalculate() => day = new AlmanacDay(Place, date);
+}

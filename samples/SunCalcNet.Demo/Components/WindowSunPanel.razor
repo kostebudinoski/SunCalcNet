@@ -1,0 +1,219 @@
+@using System.Globalization
+@using SunCalcNet.Demo.Services
+
+<div class="window-inputs">
+    <label class="field">
+        <span class="field-label">Window faces</span>
+        <select value="@facing" @onchange="OnFacing">
+            @foreach (var (label, az) in Directions)
+            {
+                <option value="@az">@label</option>
+            }
+        </select>
+    </label>
+    <label class="field">
+        <span class="field-label">Window height (m)</span>
+        <input type="number" min="0" max="500" step="1" @bind="windowHeight" @bind:after="Recalculate" />
+        <span class="field-hint">About 3 m per floor: 3rd floor ≈ 10 m</span>
+    </label>
+    <label class="field">
+        <span class="field-label">Building opposite (m tall)</span>
+        <input type="number" min="0" max="500" step="1" @bind="obstacleHeight" @bind:after="Recalculate" />
+        <span class="field-hint">6 floors ≈ 20 m, 0 = nothing in front</span>
+    </label>
+    <label class="field">
+        <span class="field-label">Distance to it (m)</span>
+        <input type="number" min="1" max="2000" step="1" @bind="obstacleDistance" @bind:after="Recalculate" />
+        <span class="field-hint">Wall to wall, across the street</span>
+    </label>
+    <p class="window-angle muted">
+        @if (Setup.ObstacleAngle > 0)
+        {
+            <text>Its roofline is @Setup.ObstacleAngle.ToString("0")° above the horizon from your window.</text>
+        }
+        else
+        {
+            <text>Your window is above its roofline, so it doesn't block the sun.</text>
+        }
+    </p>
+</div>
+
+<WindowDiagram Setup="Setup" NoonAltitude="shortestNoonAltitude" DayLabel="@shortestLabel" />
+<p class="diagram-caption muted">
+    @if (shortestNoonAltitude <= 0)
+    {
+        <text>On the shortest day the sun doesn't rise here.</text>
+    }
+    else if (shortestNoonAltitude > Setup.ObstacleAngle)
+    {
+        <text>On the shortest day (@shortestLabel) the midday sun is @shortestNoonAltitude.ToString("0")° high and clears the roof.</text>
+    }
+    else
+    {
+        <text>On the shortest day (@shortestLabel) the midday sun is only @shortestNoonAltitude.ToString("0")° high, below the roof: no direct sun at midday.</text>
+    }
+</p>
+@if (IsBorderline)
+{
+    <p class="note warn" role="note">
+        <strong>Borderline:</strong> the winter midday sun passes within @Math.Abs(shortestNoonAltitude - Setup.ObstacleAngle).ToString("0")°
+        of the roof opposite, so a small measurement error changes the winter result a lot. Check the heights and distance carefully.
+    </p>
+}
+
+<div class="window-days">
+    @foreach (var (title, result, low, high) in Results)
+    {
+        <div class="window-day">
+            <h3 class="group-title">@title <span>@result.Date.ToString("d MMM", CultureInfo.InvariantCulture)</span></h3>
+            <p class="window-total">@Duration(result.Sunlit) <span>of direct sun</span></p>
+            @if ((high - low).TotalMinutes >= 10)
+            {
+                <p class="window-range">@Duration(low) to @Duration(high) if the heights are ±2 m off</p>
+            }
+            <p class="muted">
+                @if (result.WithoutObstacle > result.Sunlit)
+                {
+                    <text>@Duration(result.WithoutObstacle) without the building opposite</text>
+                }
+                else if (result.WithoutObstacle == TimeSpan.Zero)
+                {
+                    <text>The sun never gets in front of this window</text>
+                }
+                else
+                {
+                    <text>Not blocked by the building opposite</text>
+                }
+            </p>
+            <div class="sun-bar" aria-hidden="true">
+                @foreach (var p in result.Periods)
+                {
+                    <span class="@(p.Blocked ? "blocked" : "sunny")" style="left:@P(p.Start, result); width:@W(p, result)"></span>
+                }
+            </div>
+            <p class="window-periods">
+                @{ var sunny = result.Periods.Where(p => !p.Blocked).ToList(); }
+                @(sunny.Count == 0 ? "No direct sun" : string.Join(", ", sunny.Select(p => $"{p.Start:HH:mm}–{p.End:HH:mm}")))
+            </p>
+        </div>
+    }
+</div>
+
+<div class="how-it-works">
+    <h3 class="group-title">How it works</h3>
+    <ol>
+        <li><strong>How much sky the building hides.</strong> From your window, the top of the building opposite sits at an angle
+            above the horizon (@Setup.ObstacleAngle.ToString("0")° here). When the sun is lower than that, the building is in the way.</li>
+        <li><strong>Where the sun is.</strong> Every 2 minutes through the day, SunCalcNet works out how high the sun is and which
+            direction it's in, for this place and date.</li>
+        <li><strong>Does it reach the glass?</strong> Each moment counts as direct sun when the sun is up, in front of your window
+            rather than behind the wall, and higher than the roof opposite. The counted minutes add up to the hours above.</li>
+    </ol>
+</div>
+
+<div class="how-it-works">
+    <h3 class="group-title">How sure is this?</h3>
+    <ul>
+        <li><strong>The sun's position is precise:</strong> SunCalcNet matches the U.S. Naval Observatory to within about a minute,
+            so the astronomy adds only a few minutes of error.</li>
+        <li><strong>The street is simplified:</strong> the building opposite is one long wall straight across from you, blocking the sky
+            within 60° either side of straight ahead. Buildings to the side, gaps, trees, hills, balconies above and how deep the
+            window sits aren't included, and it checks the middle of the window.</li>
+        <li><strong>Your measurements matter most:</strong> a couple of meters' error in a height can change winter hours a lot,
+            which is why each day shows a range. Clouds aren't counted: these are clear-sky hours.</li>
+    </ul>
+    <p class="muted">Good for comparing flats and getting a realistic estimate; not a substitute for an official daylight or
+        sunlight assessment.</p>
+</div>
+
+@code {
+    private static readonly (string Label, double Azimuth)[] Directions =
+    [
+        ("North", 0), ("North-east", 45), ("East", 90), ("South-east", 135),
+        ("South", 180), ("South-west", 225), ("West", 270), ("North-west", 315),
+    ];
+
+    [Parameter, EditorRequired] public AlmanacDay Day { get; set; } = default!;
+
+    private double facing = double.NaN;
+    private double windowHeight = 10;
+    private double obstacleHeight = 20;
+    private double obstacleDistance = 25;
+
+    private (string, double, DateOnly)? computedFor;
+    private double shortestNoonAltitude;
+    private string shortestLabel = "";
+    private IReadOnlyList<(string Title, WindowSunDay Result, TimeSpan Low, TimeSpan High)> Results { get; set; } = [];
+
+    // the winter midday sun within 3° of the roofline: small measurement errors swing the result
+    private bool IsBorderline =>
+        Setup.ObstacleAngle > 0 && shortestNoonAltitude > 0 && Math.Abs(shortestNoonAltitude - Setup.ObstacleAngle) <= 3;
+
+    private WindowSetup Setup => new(facing, Math.Max(0, windowHeight), Math.Max(0, obstacleHeight), Math.Max(1, obstacleDistance));
+
+    protected override void OnParametersSet()
+    {
+        // default to the sunny side: south-facing in the northern hemisphere, north-facing in the southern
+        if (double.IsNaN(facing))
+        {
+            facing = Day.Place.Lat >= 0 ? 180 : 0;
+        }
+
+        if (computedFor != (Day.Place.Name, Day.Place.Lat, Day.Date))
+        {
+            Recalculate();
+        }
+    }
+
+    private void OnFacing(ChangeEventArgs e)
+    {
+        facing = double.Parse(e.Value?.ToString() ?? "180", CultureInfo.InvariantCulture);
+        Recalculate();
+    }
+
+    private void Recalculate()
+    {
+        var year = Day.Date.Year;
+        var north = Day.Place.Lat >= 0;
+        var december = new DateOnly(year, 12, 21);
+        var june = new DateOnly(year, 6, 21);
+
+        // midday sun height on the shortest day, for the side view
+        var shortest = north ? december : june;
+        var shortestNoon = new DateTimeOffset(shortest.ToDateTime(new TimeOnly(12, 0)), Day.Zone.GetUtcOffset(shortest.ToDateTime(new TimeOnly(12, 0))));
+        var solarNoon = SunCalc.GetSunPhases(shortestNoon, Day.Place.Lat, Day.Place.Lng, Day.Zone)
+            .First(x => x.Name == SunCalcNet.Model.SunPhaseName.SolarNoon).PhaseTime;
+        shortestNoonAltitude = SunCalc.GetSunPosition(solarNoon, Day.Place.Lat, Day.Place.Lng).Altitude * 180 / Math.PI;
+        shortestLabel = shortest.ToString("d MMM", CultureInfo.InvariantCulture);
+
+        Results =
+        [
+            WithRange("Selected day", Day.Date),
+            WithRange("Shortest day", north ? december : june),
+            WithRange("Longest day", north ? june : december),
+        ];
+        computedFor = (Day.Place.Name, Day.Place.Lat, Day.Date);
+    }
+
+    private WindowSunDay Compute(DateOnly date, WindowSetup setup) => WindowSun.Compute(Day.Place, Day.Zone, date, setup);
+
+    // the day's result plus the spread if both heights are 2 m off in the worst and best directions;
+    // a missing building (0 m) stays missing rather than turning into a 2 m wall
+    private (string, WindowSunDay, TimeSpan, TimeSpan) WithRange(string title, DateOnly date)
+    {
+        var setup = Setup;
+        var building = setup.ObstacleHeight > 0 ? 2 : 0;
+        var worst = setup with { WindowHeight = Math.Max(0, setup.WindowHeight - 2), ObstacleHeight = setup.ObstacleHeight + building };
+        var best = setup with { WindowHeight = setup.WindowHeight + 2, ObstacleHeight = Math.Max(0, setup.ObstacleHeight - building) };
+        return (title, Compute(date, setup), Compute(date, worst).Sunlit, Compute(date, best).Sunlit);
+    }
+
+    private static string P(DateTimeOffset t, WindowSunDay day) =>
+        ((t - day.DayStart).TotalMinutes / (day.DayEnd - day.DayStart).TotalMinutes * 100).ToString("0.##", CultureInfo.InvariantCulture) + "%";
+
+    private static string W(SunnyPeriod p, WindowSunDay day) =>
+        ((p.End - p.Start).TotalMinutes / (day.DayEnd - day.DayStart).TotalMinutes * 100).ToString("0.##", CultureInfo.InvariantCulture) + "%";
+
+    private static string Duration(TimeSpan span) =>
+        span.TotalMinutes < 60 ? $"{(int)Math.Round(span.TotalMinutes)} min" : $"{(int)span.TotalHours} h {span.Minutes} min";
+}
