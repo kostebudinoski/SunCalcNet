@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <style>
+    circle { fill: none; stroke: #1c1d22; }
+    @media (prefers-color-scheme: dark) { circle { stroke: #ecebe6; } }
+  </style>
+  <!-- the Sky Almanac brand mark: a circle with its sunlit half -->
+  <circle cx="12" cy="12" r="10" stroke-width="1.8" />
+  <path d="M12 2a10 10 0 0 1 0 20z" fill="#e0952b" />
+</svg>

@@ -2,8 +2,17 @@ SunCalc-Net
 ============
 
 [![build](https://github.com/kostebudinoski/SunCalcNet/actions/workflows/master_build.yml/badge.svg)](https://github.com/kostebudinoski/SunCalcNet/actions/workflows/master_build.yml)
+[![NuGet](https://img.shields.io/nuget/v/SunCalcNet)](https://www.nuget.org/packages/SunCalcNet/)
+[![Live demo](https://img.shields.io/badge/live%20demo-Sky%20Almanac-e0952b)](https://kostebudinoski.dev/SunCalcNet/)
 
 A .NET port of the [SunCalc JS lib](https://github.com/mourner/suncalc) for calculating sun/moon positions and phases.
+
+> 🌅 **[See it in action: Sky Almanac →](https://kostebudinoski.dev/SunCalcNet/)**
+>
+> When is golden hour tomorrow? Where will the full moon rise? When is the sky dark enough for the Milky Way?
+> Pick any place on Earth and find out, with sunrise to sunset, blue and golden hours, moonrise and transits, the
+> year's earliest sunset and tonight's dark-sky window, plus a one-click "add to calendar". It's all calculated
+> by SunCalcNet itself, running in your browser with no server behind it.
 
 Getting Started
 ============
