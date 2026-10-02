@@ -16,6 +16,18 @@ public struct MoonPhase : IEquatable<MoonPhase>
     public DateTime? Set { get; }
 
     /// <summary>
+    /// Upper meridian transit, when the moon is at its highest point ("moon overhead").
+    /// Reported even when the moon is below the horizon; null on the ~1 day a month the day misses it.
+    /// </summary>
+    public DateTime? Transit { get; }
+
+    /// <summary>
+    /// Lower meridian transit, when the moon is at its lowest point ("moon underfoot").
+    /// Reported even when the moon is below the horizon; null on the ~1 day a month the day misses it.
+    /// </summary>
+    public DateTime? LowerTransit { get; }
+
+    /// <summary>
     /// True if the moon never rises/sets and is always above the horizon during the day
     /// </summary>
     public bool AlwaysUp { get; }
@@ -30,9 +42,22 @@ public struct MoonPhase : IEquatable<MoonPhase>
     /// <param name="maxHeight">Highest moon height above the rise/set horizon sampled over the day;
     /// decides <see cref="AlwaysUp"/> / <see cref="AlwaysDown"/> when there's neither rise nor set.</param>
     public MoonPhase(DateTime? rise, DateTime? set, double maxHeight)
+        : this(rise, set, null, null, maxHeight)
+    {
+    }
+
+    /// <param name="rise">Moonrise time, or null if the moon doesn't rise during the day.</param>
+    /// <param name="set">Moonset time, or null if the moon doesn't set during the day.</param>
+    /// <param name="transit">Upper meridian transit, or null if it doesn't occur during the day.</param>
+    /// <param name="lowerTransit">Lower meridian transit, or null if it doesn't occur during the day.</param>
+    /// <param name="maxHeight">Highest moon height above the rise/set horizon sampled over the day;
+    /// decides <see cref="AlwaysUp"/> / <see cref="AlwaysDown"/> when there's neither rise nor set.</param>
+    public MoonPhase(DateTime? rise, DateTime? set, DateTime? transit, DateTime? lowerTransit, double maxHeight)
     {
         Rise = rise;
         Set = set;
+        Transit = transit;
+        LowerTransit = lowerTransit;
         AlwaysUp = false;
         AlwaysDown = false;
 
@@ -65,6 +90,8 @@ public struct MoonPhase : IEquatable<MoonPhase>
     {
         return Rise == other.Rise
                && Set == other.Set
+               && Transit == other.Transit
+               && LowerTransit == other.LowerTransit
                && AlwaysUp == other.AlwaysUp
                && AlwaysDown == other.AlwaysDown;
     }
@@ -85,6 +112,8 @@ public struct MoonPhase : IEquatable<MoonPhase>
         {
             var hashCode = Rise.GetHashCode();
             hashCode = (hashCode * 397) ^ Set.GetHashCode();
+            hashCode = (hashCode * 397) ^ Transit.GetHashCode();
+            hashCode = (hashCode * 397) ^ LowerTransit.GetHashCode();
             hashCode = (hashCode * 397) ^ AlwaysUp.GetHashCode();
             return (hashCode * 397) ^ AlwaysDown.GetHashCode();
         }

@@ -149,8 +149,41 @@ public static class MoonCalc
         // parabola root can sit ~0.2° off), then convert fractional hours to an absolute time.
         var riseTime = rise.HasValue ? RefineMoonCross(date.HoursLater(rise.Value), lw, phi) : (DateTime?) null;
         var setTime = set.HasValue ? RefineMoonCross(date.HoursLater(set.Value), lw, phi) : (DateTime?) null;
-        
-        return new MoonPhase(riseTime, setTime, hMax);
+
+        // meridian crossings, reported whether or not the moon is above the horizon at the time
+        var transit = GetMoonTransit(date, lw, 0);
+        var lowerTransit = GetMoonTransit(date, lw, Math.PI);
+
+        return new MoonPhase(riseTime, setTime, transit, lowerTransit, hMax);
+    }
+
+    /// <summary>
+    /// The moon's local hour angle (radians, not wrapped) at the given days since J2000 (UT).
+    /// </summary>
+    private static double GetMoonHourAngle(double daysSinceJ2000, double lw)
+    {
+        return Position.GetSiderealTime(daysSinceJ2000, lw) - Moon.GetGeocentricCoords(AstroTime.ToDaysTt(daysSinceJ2000)).RightAscension;
+    }
+
+    /// <summary>
+    /// Time in [start, start + 1 day) when the moon's hour angle reaches <paramref name="targetHourAngle"/>
+    /// (0 = upper transit, PI = lower transit), or null when the day misses it, about once a month
+    /// since the lunar day lasts ~24.8 hours.
+    /// </summary>
+    private static DateTime? GetMoonTransit(DateTime start, double lw, double targetHourAngle)
+    {
+        const double rate = 2 * Math.PI * 0.96614; // mean hour angle rate (347.8° per day) in radians per day
+        var d0 = start.ToDaysSinceJ2000();
+
+        // first crossing after start at the mean rate, then two Newton steps against the real hour angle
+        var a = targetHourAngle - GetMoonHourAngle(d0, lw);
+        var d = d0 + (a - 2 * Math.PI * Math.Floor(a / (2 * Math.PI))) / rate;
+        for (var i = 0; i < 2; i++)
+        {
+            d -= Position.WrapPi(GetMoonHourAngle(d, lw) - targetHourAngle) / rate;
+        }
+
+        return d < d0 + 1 ? start.AddDays(d - d0) : (DateTime?) null;
     }
 
     /// <summary>

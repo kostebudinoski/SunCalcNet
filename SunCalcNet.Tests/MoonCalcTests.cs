@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using SunCalcNet.Model;
 using Xunit;
 
 namespace SunCalcNet.Tests;
@@ -122,5 +124,90 @@ public class MoonCalcTests
         Assert.Null(moonPhase.Set);
         Assert.True(moonPhase.AlwaysUp);
         Assert.False(moonPhase.AlwaysDown);
+    }
+
+    [Theory]
+    [InlineData(50.45466, 30.5238, 2026, 1, 3, "2026-01-03 22:36")]
+    [InlineData(50.45466, 30.5238, 2026, 1, 18, "2026-01-18 09:51")]
+    [InlineData(78.22334, 15.64689, 2026, 1, 3, "2026-01-03 23:38")]
+    [InlineData(78.22334, 15.64689, 2026, 1, 10, "2026-01-10 04:28")]
+    public void Get_Moon_Times_Returns_Transit_Matching_USNO(double lat, double lng, int year, int month, int day, string expected)
+    {
+        //Arrange
+        var date = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
+
+        //Act
+        var moonPhase = MoonCalc.GetMoonPhase(date, lat, lng);
+
+        //Assert
+        Assert.NotNull(moonPhase.Transit);
+        var offMinutes = (moonPhase.Transit.Value - DateTime.Parse(expected, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal)).TotalMinutes;
+        Assert.True(Math.Abs(offMinutes) <= 1, $"transit {moonPhase.Transit:O} is {offMinutes:F2} min from USNO {expected}");
+    }
+
+    [Fact]
+    public void Get_Moon_Times_Returns_Lower_Transit_Matching_USNO_When_Moon_Is_Always_Up()
+    {
+        //Arrange
+        var date = new DateTime(2026, 1, 3, 0, 0, 0, DateTimeKind.Utc);
+        var lat = 78.22334;
+        var lng = 15.64689;
+
+        //Act
+        var moonPhase = MoonCalc.GetMoonPhase(date, lat, lng);
+
+        //Assert
+        Assert.True(moonPhase.AlwaysUp);
+        Assert.NotNull(moonPhase.LowerTransit);
+        var offMinutes = (moonPhase.LowerTransit.Value - new DateTime(2026, 1, 3, 11, 6, 0, DateTimeKind.Utc)).TotalMinutes;
+        Assert.True(Math.Abs(offMinutes) <= 1, $"lower transit {moonPhase.LowerTransit:O} is {offMinutes:F2} min from USNO 11:06");
+    }
+
+    [Theory]
+    [InlineData(51.5, -0.1)]
+    [InlineData(-33.9, 151.2)]
+    [InlineData(40, -179.7)]
+    [InlineData(78.2, 15.6)]
+    public void Get_Moon_Times_Reports_Each_Transit_Exactly_Once_Across_Consecutive_Days(double lat, double lng)
+    {
+        //Arrange
+        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        const int days = 60;
+
+        //Act
+        var moonPhases = new MoonPhase[days];
+        for (var i = 0; i < days; i++)
+        {
+            moonPhases[i] = MoonCalc.GetMoonPhase(start.AddDays(i), lat, lng);
+        }
+
+        //Assert
+        AssertEachTransitOnce(moonPhases, x => x.Transit, "transit");
+        AssertEachTransitOnce(moonPhases, x => x.LowerTransit, "lower transit");
+    }
+
+    private static void AssertEachTransitOnce(MoonPhase[] moonPhases, Func<MoonPhase, DateTime?> transit, string name)
+    {
+        DateTime? previous = null;
+        var skipped = 0;
+        foreach (var moonPhase in moonPhases)
+        {
+            var current = transit(moonPhase);
+            if (current is null)
+            {
+                skipped++;
+                continue;
+            }
+
+            if (previous.HasValue)
+            {
+                var gapHours = (current.Value - previous.Value).TotalHours;
+                Assert.True(gapHours > 24.2 && gapHours < 25.6, $"{name} {current:O} is {gapHours:F2} h after the previous one");
+            }
+
+            previous = current;
+        }
+
+        Assert.InRange(skipped, 1, 3);
     }
 }

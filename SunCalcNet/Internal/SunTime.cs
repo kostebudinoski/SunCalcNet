@@ -13,14 +13,6 @@ internal static class SunTime
     }
 
     /// <summary>
-    /// Wraps an angle to the range (-PI, PI].
-    /// </summary>
-    private static double WrapPi(double a)
-    {
-        return a - 2 * Math.PI * Math.Round(a / (2 * Math.PI));
-    }
-
-    /// <summary>
     /// Refines a transit time so the Sun's local hour angle is zero (Meeus 15.2).
     /// </summary>
     /// <param name="dt">Approximate transit, days since J2000 (UT).</param>
@@ -30,7 +22,7 @@ internal static class SunTime
     {
         for (var i = 0; i < 3; i++)
         {
-            var hourAngle = WrapPi(Position.GetSiderealTime(dt, lw) - Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt)).RightAscension);
+            var hourAngle = Position.WrapPi(Position.GetSiderealTime(dt, lw) - Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt)).RightAscension);
             dt -= hourAngle / (2 * Math.PI);
         }
 
@@ -60,7 +52,7 @@ internal static class SunTime
         for (var i = 0; i < 2; i++)
         {
             var c = Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(d));
-            var hourAngle = WrapPi(Position.GetSiderealTime(d, lw) - c.RightAscension);
+            var hourAngle = Position.WrapPi(Position.GetSiderealTime(d, lw) - c.RightAscension);
             var h = Position.GetAltitude(hourAngle, phi, c.Declination);
             var sinH = Math.Cos(phi) * Math.Cos(c.Declination) * Math.Sin(hourAngle);
             if (Math.Abs(sinH) < 1e-6)

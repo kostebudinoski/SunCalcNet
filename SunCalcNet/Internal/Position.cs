@@ -84,6 +84,16 @@ internal static class Position
     }
 
     /// <summary>
+    /// Wraps an angle to the range (-PI, PI].
+    /// </summary>
+    /// <param name="angle">The angle in radians.</param>
+    /// <returns>The equivalent angle in (-PI, PI] radians.</returns>
+    internal static double WrapPi(double angle)
+    {
+        return angle - 2 * Math.PI * Math.Round(angle / (2 * Math.PI));
+    }
+
+    /// <summary>
     /// Calculates the atmospheric refraction correction.
     /// </summary>
     /// <param name="altitude">The altitude in radians.</param>
