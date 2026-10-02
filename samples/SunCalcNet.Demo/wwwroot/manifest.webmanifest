@@ -1,0 +1,14 @@
+{
+  "name": "Sky Almanac",
+  "short_name": "Sky Almanac",
+  "description": "Sunrise, sunset, golden hour, moon times and dark-sky windows for any place.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#f7f5f0",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

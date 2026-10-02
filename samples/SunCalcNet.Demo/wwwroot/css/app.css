@@ -1139,13 +1139,35 @@ main {
     color: var(--ink-3);
 }
 
+/* the crawlable intro in index.html, shown under the loader until the app replaces it */
+
+.seo-intro {
+    max-width: 62ch;
+    margin: 0 auto var(--space-7);
+    color: var(--ink-2);
+}
+
+.seo-intro h1 {
+    margin-bottom: var(--space-3);
+    font-size: 24px;
+    color: var(--ink);
+}
+
+.seo-intro ul {
+    padding-left: var(--space-5);
+}
+
+.seo-intro li {
+    margin: var(--space-1) 0;
+}
+
 /* boot screen */
 
 .boot {
     display: grid;
     place-items: center;
     gap: var(--space-4);
-    min-height: 70vh;
+    min-height: 40vh;
     color: var(--ink-3);
 }
 

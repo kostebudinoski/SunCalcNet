@@ -5,7 +5,48 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
-    <title>Sky Almanac</title>
+    <title>Sky Almanac: sunrise, sunset, golden hour and moon times for any place</title>
+    <meta name="description" content="Free sunrise and sunset times, golden hour, blue hour, moonrise, moon phases and dark-sky windows for any place on Earth. Plan photos and stargazing, add events to your calendar. Runs in your browser." />
+    <meta name="keywords" content="sunrise time, sunset time, golden hour, blue hour, moonrise, moon phase, full moon, dark sky, astrophotography, photography planner" />
+    <meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121317" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://kostebudinoski.dev/SunCalcNet/" />
+    <link rel="manifest" href="manifest.webmanifest" />
+
+    <!-- link previews (WhatsApp, Slack, LinkedIn, X, Facebook...) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sky Almanac" />
+    <meta property="og:title" content="Sky Almanac: when is golden hour, moonrise and a truly dark sky?" />
+    <meta property="og:description" content="Sunrise, sunset, golden and blue hours, moon phases and dark-sky windows for any place on Earth. Free, instant, in your browser." />
+    <meta property="og:url" content="https://kostebudinoski.dev/SunCalcNet/" />
+    <meta property="og:image" content="https://kostebudinoski.dev/SunCalcNet/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Sky Almanac showing sunrise 05:59 and sunset 16:36 in Skopje with the day's sun and moon curve" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Sky Almanac",
+        "url": "https://kostebudinoski.dev/SunCalcNet/",
+        "description": "Free sunrise and sunset times, golden hour, blue hour, moonrise, moon phases and dark-sky windows for any place on Earth. Plan photos and stargazing, add events to your calendar. Runs in your browser.",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any (runs in the browser)",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "featureList": [
+            "Sunrise, sunset and solar noon times",
+            "Golden hour and blue hour for photographers",
+            "Moonrise, moonset, moon phases and supermoons",
+            "Dark-sky windows for stargazing and astrophotography",
+            "Solstices, equinoxes and clock changes",
+            "Add events to your calendar"
+        ],
+        "isBasedOn": "https://github.com/kostebudinoski/SunCalcNet"
+    }
+    </script>
     <base href="./" />
     <link rel="preload" id="webassembly" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,10 +61,24 @@
 
 <body>
     <div id="app">
+        <!-- readable before the app loads, and by search engines; the app replaces it with the same information, live -->
         <div class="boot">
             <div class="boot-orbit"><span></span></div>
             <p>Loading the sky…</p>
         </div>
+        <section class="seo-intro">
+            <h1>Sunrise, sunset, golden hour and moon times for any place</h1>
+            <p>Sky Almanac shows the day's sunrise and sunset, golden hour and blue hour, moonrise, moonset and moon phase
+                for any place on Earth, with the sky's colour across the whole day and where to look for the sun and moon.</p>
+            <ul>
+                <li><strong>For photographers:</strong> golden and blue hours, the direction the light comes from, and full moons rising at sunset.</li>
+                <li><strong>For stargazers:</strong> tonight's dark-sky window, when the sun is 18° below the horizon and the moon is down.</li>
+                <li><strong>Coming up:</strong> the next full moon and new moon, supermoons, solstices, equinoxes, clock changes and the year's earliest sunset.</li>
+                <li><strong>Add to calendar</strong> in one click, with a reminder before the light is best.</li>
+            </ul>
+            <p>Free, with no sign-up. Everything is calculated in your browser by
+                <a href="https://github.com/kostebudinoski/SunCalcNet">SunCalcNet</a>, an open-source .NET library.</p>
+        </section>
     </div>
 
     <div id="blazor-error-ui">
