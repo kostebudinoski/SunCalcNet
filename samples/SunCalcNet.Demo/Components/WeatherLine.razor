@@ -1,0 +1,111 @@
+@using SunCalcNet.Demo.Services
+@inject WeatherService Weather
+
+@* the selected day's weather, and what the clouds mean for golden hour and stargazing; hidden when there's no forecast *@
+@if (weather is { } w)
+{
+    var (summary, kind) = Overall(w);
+    <div class="now weather-card" aria-live="polite">
+        <p class="overline">Weather · @Day.Date.ToString("ddd d MMM", System.Globalization.CultureInfo.InvariantCulture)</p>
+        <p class="now-state">
+            <svg class="weather-icon" viewBox="0 0 24 24" aria-hidden="true">
+                @if (kind is WeatherKind.Clear or WeatherKind.PartlyCloudy)
+                {
+                    <circle cx="@(kind == WeatherKind.Clear ? 12 : 9)" cy="@(kind == WeatherKind.Clear ? 12 : 9)" r="4.5" class="w-sun" />
+                }
+                @if (kind is not WeatherKind.Clear)
+                {
+                    <path d="M7 18.5h10a3.5 3.5 0 0 0 .4-7A5 5 0 0 0 8 10.6a4 4 0 0 0-1 7.9z" class="w-cloud" />
+                }
+                @if (kind is WeatherKind.Rain or WeatherKind.Storm)
+                {
+                    <path d="M9 20.5l-1 2M13 20.5l-1 2M17 20.5l-1 2" class="w-rain" />
+                }
+                @if (kind == WeatherKind.Snow)
+                {
+                    <path d="M9 21.5h.01M13 21.5h.01M17 21.5h.01" class="w-snow" />
+                }
+            </svg>
+            @summary
+        </p>
+        <p><span class="key temp"></span>@w.MinTemperature.ToString("0")–@w.MaxTemperature.ToString("0") °C@(w.RainChance is { } rain ? $", {rain}% chance of rain" : "").</p>
+        <p><span class="key sun"></span>@Duration(w.Sunshine) of sunshine.</p>
+        @foreach (var (label, text) in Tips(w))
+        {
+            <p><span class="key cloud"></span><strong>@label:</strong> @text</p>
+        }
+        <p class="weather-credit">Forecast: <a href="https://open-meteo.com/">Open-Meteo</a></p>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public AlmanacDay Day { get; set; } = default!;
+    [Parameter] public PhotoLight? Photo { get; set; }
+
+    private DayWeather? weather;
+    private (string, double, double, DateOnly)? loadedFor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = (Day.Place.Name, Day.Place.Lat, Day.Place.Lng, Day.Date);
+        if (loadedFor == key)
+        {
+            return;
+        }
+
+        loadedFor = key;
+        weather = null;
+        var result = await Weather.GetAsync(Day.Place, Day.Date);
+        if (loadedFor == key) // ignore a late answer for a day the user has already left
+        {
+            weather = result;
+        }
+    }
+
+    // the daily code is the day's worst condition, so one grey spell turns a sunny day "overcast"; on dry days,
+    // describe the day by how much of the daylight was sunny instead
+    private (string, WeatherKind) Overall(DayWeather w)
+    {
+        if (w.Kind is not (WeatherKind.Clear or WeatherKind.PartlyCloudy or WeatherKind.Cloudy) || Day.DayLength is not { } daylight || daylight <= TimeSpan.Zero)
+        {
+            return (w.Summary, w.Kind);
+        }
+
+        var sunny = w.Sunshine / daylight;
+        return sunny switch
+        {
+            >= 0.85 => ("Sunny", WeatherKind.Clear),
+            >= 0.6 => ("Mostly sunny", WeatherKind.PartlyCloudy),
+            >= 0.3 => ("Partly cloudy", WeatherKind.PartlyCloudy),
+            >= 0.1 => ("Mostly cloudy", WeatherKind.Cloudy),
+            _ => ("Overcast", WeatherKind.Cloudy),
+        };
+    }
+
+    // what the clouds mean for the evening golden hour and tonight's dark sky
+    private IEnumerable<(string Label, string Text)> Tips(DayWeather w)
+    {
+        if (Photo?.Evening.GoldenHour is { } golden && w.CloudCoverDuring(golden.Start.DateTime, golden.End.DateTime) is { } atSunset)
+        {
+            yield return ("Golden hour", atSunset switch
+            {
+                < 25 => $"{atSunset}% cloud, a good chance of warm light.",
+                <= 70 => $"{atSunset}% cloud, could make a colourful sky.",
+                _ => $"{atSunset}% cloud, the light will probably be hidden.",
+            });
+        }
+
+        if (Photo?.DarkSky is [var dark, ..] && w.CloudCoverDuring(dark.Start.DateTime, dark.End.DateTime) is { } atNight)
+        {
+            yield return ("Stargazing", atNight switch
+            {
+                < 20 => $"{atNight}% cloud, a good night for stars.",
+                <= 60 => $"{atNight}% cloud, stars through the gaps.",
+                _ => $"{atNight}% cloud, the stars will probably be hidden.",
+            });
+        }
+    }
+
+    private static string Duration(TimeSpan span) =>
+        span.TotalMinutes < 60 ? $"{(int)Math.Round(span.TotalMinutes)} min" : $"{(int)span.TotalHours} h {span.Minutes} min";
+}

@@ -11,8 +11,9 @@ A .NET port of the [SunCalc JS lib](https://github.com/mourner/suncalc) for calc
 >
 > When is golden hour tomorrow? Where will the full moon rise? When is the sky dark enough for the Milky Way?
 > Pick any place on Earth and find out, with sunrise to sunset, blue and golden hours, moonrise and transits, the
-> year's earliest sunset and tonight's dark-sky window, plus a one-click "add to calendar". It's all calculated
-> by SunCalcNet itself, running in your browser with no server behind it.
+> year's earliest sunset and tonight's dark-sky window, the day's weather and whether clouds will hide the sunset,
+> plus a one-click "add to calendar". The sun and moon are calculated by SunCalcNet itself, running in your browser;
+> weather comes from Open-Meteo, and there's no server of our own behind it.
 
 Getting Started
 ============

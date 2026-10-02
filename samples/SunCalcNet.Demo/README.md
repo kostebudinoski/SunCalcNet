@@ -24,5 +24,7 @@ Links can open a specific place and day, e.g. `?place=Skopje&date=2026-10-02`.
 ## Notes
 
 - The library returns UTC; the demo converts times to the place's own time zone for display only.
+- The weather line uses [Open-Meteo](https://open-meteo.com/) (free, no API key, CC BY 4.0). It's the only outside call:
+  the place's coordinates are sent to Open-Meteo, and the line is hidden when a date has no forecast or the call fails.
 - The project references `SunCalcNet.csproj` directly, so it always shows the current library code.
 - It's not part of `SunCalcNet.slnx`, so CI and the NuGet package are unaffected.

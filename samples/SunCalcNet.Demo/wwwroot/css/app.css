@@ -315,11 +315,10 @@ main {
     padding-top: var(--space-6);
 }
 
+/* headline across the full width, then the "now" and weather cards side by side underneath */
 .summary {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
-    gap: var(--space-6);
-    align-items: end;
+    gap: var(--space-5);
 }
 
 .overline {
@@ -380,6 +379,72 @@ main {
     transform: translateY(1px);
 }
 
+/* lines with a coloured dot wrap with a hanging indent, so the text lines up after the dot */
+.now p:has(> .key) {
+    padding-left: 16px;
+    text-indent: -16px;
+}
+
+.summary-side {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-4);
+    align-items: stretch;
+}
+
+.weather-card .now-state {
+    gap: var(--space-2);
+}
+
+.weather-icon {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    stroke-linecap: round;
+}
+
+.w-sun {
+    fill: var(--sun);
+}
+
+.w-cloud {
+    fill: var(--surface);
+    stroke: var(--ink-3);
+    stroke-width: 1.5;
+}
+
+.w-rain, .w-snow {
+    stroke: #4f7fc4;
+    stroke-width: 2;
+}
+
+.w-snow {
+    stroke-width: 3;
+}
+
+.key.temp {
+    background: #e06a3b;
+}
+
+.key.cloud {
+    background: var(--ink-3);
+}
+
+.weather-card strong {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.weather-credit {
+    margin-top: var(--space-1);
+    font-size: 11px;
+    color: var(--ink-3);
+}
+
+.weather-credit a {
+    color: inherit;
+}
+
 .meta {
     margin-top: var(--space-2);
     font-size: 13px;
@@ -388,6 +453,7 @@ main {
 
 .now {
     display: grid;
+    align-content: start; /* keep lines together when the card is stretched to its neighbour's height */
     gap: var(--space-1);
     padding: var(--space-4);
     background: var(--surface);

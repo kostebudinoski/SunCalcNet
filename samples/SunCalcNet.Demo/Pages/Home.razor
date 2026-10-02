@@ -103,11 +103,14 @@
                 </p>
             </div>
 
-            <div class="now" aria-live="polite">
-                <p class="overline">At @Local(time)</p>
-                <p class="now-state"><i class="swatch" style="background:@AlmanacDay.SkyColor(position.SunAltitude)"></i>@AlmanacDay.SkyState(position.SunAltitude)</p>
-                <p><span class="key sun"></span>@BodySentence("Sun", position.SunAltitude, position.SunAzimuth) @NextSunEvent(time)</p>
-                <p><span class="key moon"></span>@BodySentence("Moon", position.MoonAltitude, position.MoonAzimuth)</p>
+            <div class="summary-side">
+                <div class="now" aria-live="polite">
+                    <p class="overline">At @Local(time)</p>
+                    <p class="now-state"><i class="swatch" style="background:@AlmanacDay.SkyColor(position.SunAltitude)"></i>@AlmanacDay.SkyState(position.SunAltitude)</p>
+                    <p><span class="key sun"></span>@BodySentence("Sun", position.SunAltitude, position.SunAzimuth) @NextSunEvent(time)</p>
+                    <p><span class="key moon"></span>@BodySentence("Moon", position.MoonAltitude, position.MoonAzimuth)</p>
+                </div>
+                <WeatherLine Day="day" Photo="photo" />
             </div>
         </section>
 
@@ -268,16 +271,19 @@
         SelectPlace(AlmanacDay.Places.First(x => x.Name == placeName));
         GoToNow();
 
-        if (DateOnly.TryParseExact(QueryDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var queriedDate))
+        if (DateOnly.TryParseExact(QueryDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var queriedDate)
+            && queriedDate != date)
         {
+            // another day: same time of day as now there, like the ‹ › day buttons
             date = queriedDate;
-            minute = 12 * 60;
+            minute = MinutesIntoDayThere();
             Recalculate();
         }
     }
 
     private void OnPlaceChanged(ChangeEventArgs e)
     {
+        var moment = CurrentMoment();
         placeName = e.Value?.ToString() ?? CustomName;
         if (AlmanacDay.Places.FirstOrDefault(x => x.Name == placeName) is { } place)
         {
@@ -288,7 +294,7 @@
             coordsOpen = true;
         }
 
-        Recalculate();
+        ShowMoment(moment);
     }
 
     private void SelectPlace(Place place)
@@ -299,8 +305,28 @@
 
     private void OnCoordinatesChanged()
     {
+        var moment = CurrentMoment();
         placeName = CustomName;
+        ShowMoment(moment);
+    }
+
+    // the instant the strip points at, so switching places keeps the same moment rather than the same clock time
+    private DateTime? CurrentMoment() => day?.StartUtc.AddMinutes(minute);
+
+    // show the new place's local day and time at that instant (the date moves when it's already tomorrow there)
+    private void ShowMoment(DateTime? utc)
+    {
+        if (utc is not { } moment)
+        {
+            Recalculate();
+            return;
+        }
+
+        var zone = AlmanacDay.FindZone(CurrentPlace().TimeZoneId);
+        date = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(moment, zone));
         Recalculate();
+        minute = Math.Clamp((moment - day!.StartUtc).TotalMinutes, 0, day.LengthMinutes - 1);
+        UpdatePosition();
     }
 
     private void ShiftDay(int days)
@@ -308,6 +334,13 @@
         date = date.AddDays(days);
         Recalculate();
     }
+
+    // the current local time of day at the selected place, in minutes after midnight
+    private double MinutesIntoDayThere() =>
+        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, AlmanacDay.FindZone(CurrentPlace().TimeZoneId)).TimeOfDay.TotalMinutes;
+
+    private DateOnly TodayThere() =>
+        DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, AlmanacDay.FindZone(CurrentPlace().TimeZoneId)));
 
     private void GoToNow()
     {
@@ -360,9 +393,17 @@
 
     private async Task ShowDay(DateOnly value)
     {
-        date = value;
-        minute = 12 * 60;
-        Recalculate();
+        if (value == TodayThere())
+        {
+            GoToNow();
+        }
+        else
+        {
+            date = value;
+            minute = MinutesIntoDayThere();
+            Recalculate();
+        }
+
         await JS.InvokeVoidAsync("scrollTo", new { top = 0, behavior = "smooth" });
     }
 
