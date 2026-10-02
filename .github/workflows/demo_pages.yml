@@ -1,0 +1,63 @@
+name: Demo Pages
+
+# Publishes the Sky Almanac sample (samples/SunCalcNet.Demo) to GitHub Pages.
+# One-time setup: repository Settings > Pages > Build and deployment > Source: "GitHub Actions".
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'SunCalcNet/**'
+      - 'samples/SunCalcNet.Demo/**'
+      - '.github/workflows/demo_pages.yml'
+  workflow_dispatch:
+
+env:
+  # Stop wasting time caching packages
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  # Disable sending usage data to Microsoft
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# one deployment at a time; a newer push replaces a queued one
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Publish demo
+      run: dotnet publish samples/SunCalcNet.Demo/SunCalcNet.Demo.csproj -c Release -o out
+
+    - uses: actions/configure-pages@v6
+
+    - name: Upload site
+      uses: actions/upload-pages-artifact@v5
+      with:
+        path: out/wwwroot
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v5

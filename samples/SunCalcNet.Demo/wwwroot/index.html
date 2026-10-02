@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Sky Almanac</title>
+    <base href="./" />
+    <link rel="preload" id="webassembly" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="icon-192.png" />
+    <script type="importmap"></script>
+</head>
+
+<body>
+    <div id="app">
+        <div class="boot">
+            <div class="boot-orbit"><span></span></div>
+            <p>Loading the sky…</p>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        Something went wrong.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <script>
+        window.skyAlmanac = {
+            locate: () => new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("Geolocation is not available"));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    p => resolve([p.coords.latitude, p.coords.longitude]),
+                    e => reject(new Error(e.message)),
+                    { timeout: 10000 });
+            })
+        };
+    </script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+</body>
+
+</html>

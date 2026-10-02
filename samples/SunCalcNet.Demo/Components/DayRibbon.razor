@@ -1,0 +1,99 @@
+@using System.Globalization
+@using SunCalcNet.Demo.Services
+@using SunCalcNet.Model
+
+@* The day as one strip: sky colour from the sun's altitude, sun and moon altitude curves, key events.
+   The SVG stretches to any width (strokes don't scale); text and dots are HTML so they stay legible.
+   A transparent range input covers the strip, so dragging the strip itself moves the time. *@
+<div class="ribbon">
+    <div class="ribbon-events" aria-hidden="true">
+        @foreach (var e in Day.SunEvents.Where(e => Labelled.Contains(e.Name) && Day.IsToday(e.Utc)))
+        {
+            <span class="ribbon-event @Anchor(e.Name)" style="left:@P(Day.MinuteOf(e.Utc) / Day.LengthMinutes)">
+                <small>@Short(e.Name)</small> @Day.ToLocal(e.Utc).ToString("HH:mm")
+            </span>
+        }
+    </div>
+
+    <div class="ribbon-sky">
+        <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+                <linearGradient id="skyGradient" x1="0" x2="1" y1="0" y2="0">
+                    @foreach (var s in Day.Samples)
+                    {
+                        <stop offset="@F(s.Minute / Day.LengthMinutes)" stop-color="@AlmanacDay.SkyColor(s.SunAltitude)" />
+                    }
+                </linearGradient>
+            </defs>
+            <rect width="1000" height="100" fill="url(#skyGradient)" />
+            <rect y="50" width="1000" height="50" class="ground" />
+            <line x1="0" x2="1000" y1="50" y2="50" class="horizon" />
+            @foreach (var e in Day.SunEvents.Where(e => Labelled.Contains(e.Name) && Day.IsToday(e.Utc)))
+            {
+                var x = Day.MinuteOf(e.Utc) / Day.LengthMinutes * 1000;
+                <line x1="@F(x)" x2="@F(x)" y1="0" y2="100" class="event-line" />
+            }
+            <polyline points="@Curve(s => s.MoonAltitude)" class="moon-curve" />
+            <polyline points="@Curve(s => s.SunAltitude)" class="sun-curve" />
+        </svg>
+
+        @foreach (var (time, label) in MoonMarks)
+        {
+            <span class="moon-mark" style="left:@P(Day.MinuteOf(time) / Day.LengthMinutes)">
+                @label @Day.ToLocal(time).ToString("HH:mm")
+            </span>
+        }
+
+        <span class="cursor" style="left:@P(Minute / Day.LengthMinutes)"></span>
+        <span class="body moon" style="left:@P(Minute / Day.LengthMinutes); top:@P(Y(Position.MoonAltitude) / 100)"></span>
+        <span class="body sun" style="left:@P(Minute / Day.LengthMinutes); top:@P(Y(Position.SunAltitude) / 100)"></span>
+        <span class="cursor-time" style="left:@P(Math.Clamp(Minute / Day.LengthMinutes, 0.03, 0.97))">@Day.ToLocal(Day.StartUtc.AddMinutes(Minute)).ToString("HH:mm")</span>
+
+        <input class="scrub" type="range" min="0" max="@F(Day.LengthMinutes - 1)" step="1" value="@F(Minute)"
+               @oninput="OnInput" aria-label="Time of day" aria-valuetext="@Day.ToLocal(Day.StartUtc.AddMinutes(Minute)).ToString("HH:mm")" />
+    </div>
+
+    <div class="ribbon-hours" aria-hidden="true">
+        @for (var h = 0; h <= 24; h += 3)
+        {
+            <span style="left:@P(h * 60.0 / Day.LengthMinutes)">@h.ToString("00")</span>
+        }
+    </div>
+</div>
+
+@code {
+    private static readonly HashSet<SunPhaseName> Labelled = [SunPhaseName.Sunrise, SunPhaseName.SolarNoon, SunPhaseName.Sunset];
+
+    [Parameter, EditorRequired] public AlmanacDay Day { get; set; } = default!;
+    [Parameter, EditorRequired] public SkyPosition Position { get; set; } = default!;
+    [Parameter] public double Minute { get; set; }
+    [Parameter] public EventCallback<double> MinuteChanged { get; set; }
+
+    private IEnumerable<(DateTime Time, string Label)> MoonMarks
+    {
+        get
+        {
+            if (Day.Moon.Rise is { } rise) yield return (rise, "Moonrise");
+            if (Day.Moon.Set is { } set) yield return (set, "Moonset");
+        }
+    }
+
+    private Task OnInput(ChangeEventArgs e) =>
+        MinuteChanged.InvokeAsync(double.Parse(e.Value?.ToString() ?? "0", CultureInfo.InvariantCulture));
+
+    // altitude to y in the 0..100 viewBox: horizon at 50, ±90° reaches the edges (with a small inset)
+    private static double Y(double altitude) => 50 - Math.Clamp(altitude, -90, 90) / 90 * 46;
+
+    private string Curve(Func<SkySample, double> altitude) =>
+        string.Join(" ", Day.Samples.Select(s => $"{F(s.Minute / Day.LengthMinutes * 1000)},{F(Y(altitude(s)))}"));
+
+    private static string Anchor(SunPhaseName name) =>
+        name == SunPhaseName.Sunrise ? "end" : name == SunPhaseName.Sunset ? "start" : "middle";
+
+    private static string Short(SunPhaseName name) =>
+        name == SunPhaseName.SolarNoon ? "Noon" : name.Value;
+
+    private static string P(double fraction) => (fraction * 100).ToString("0.###", CultureInfo.InvariantCulture) + "%";
+
+    private static string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+}

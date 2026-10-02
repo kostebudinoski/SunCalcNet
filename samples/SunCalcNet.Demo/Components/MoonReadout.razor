@@ -1,0 +1,21 @@
+@using SunCalcNet.Demo.Services
+
+<div class="with-info">
+    <dt>@Label <InfoTip Label="@Label" Text="@(Description + (SkippedToday ? " " + AlmanacDay.MoonDescriptions.Missing : ""))" /></dt>
+    <dd>@(Time is { } t ? Day.ToLocal(t).ToString("HH:mm") : "—")</dd>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter] public DateTime? Time { get; set; }
+    [Parameter, EditorRequired] public string Description { get; set; } = "";
+    [Parameter, EditorRequired] public AlmanacDay Day { get; set; } = default!;
+
+    /// <summary>
+    /// Transits happen whether or not the moon is up; rise and set don't on polar always-up/down days.
+    /// </summary>
+    [Parameter] public bool IsTransit { get; set; }
+
+    // a missing event means "skipped this calendar day" unless the moon never crosses the horizon at all
+    private bool SkippedToday => Time is null && (IsTransit || !(Day.Moon.AlwaysUp || Day.Moon.AlwaysDown));
+}

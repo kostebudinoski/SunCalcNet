@@ -1,0 +1,82 @@
+@using SunCalcNet.Demo.Services
+
+@* Map of the sky seen from above: centre is overhead, the rim is the horizon, north up and east right *@
+<svg class="compass" viewBox="-178 -178 356 356" role="img"
+     aria-label="@($"Sun at {Position.SunAltitude:F0}° altitude, {Position.SunAzimuth:F0}° azimuth; moon at {Position.MoonAltitude:F0}° altitude, {Position.MoonAzimuth:F0}° azimuth")">
+    <circle r="@R" class="dome" />
+    @foreach (var alt in new[] { 30, 60 })
+    {
+        <g>
+            <circle r="@F(Radius(alt))" class="ring" />
+            <text x="4" y="@F(-Radius(alt) - 3)" class="ring-label">@(alt)°</text>
+        </g>
+    }
+    @for (var az = 0; az < 360; az += 30)
+    {
+        var (x, y) = Point(az, 0);
+        <line x1="0" y1="0" x2="@F(x)" y2="@F(y)" class="spoke" />
+    }
+    @foreach (var (label, az) in new[] { ("N", 0), ("E", 90), ("S", 180), ("W", 270) })
+    {
+        var (x, y) = Point(az, -14);
+        <g><text x="@F(x)" y="@F(y + 5)" class="cardinal">@label</text></g>
+    }
+
+    @foreach (var segment in Segments(s => (s.MoonAltitude, s.MoonAzimuth)))
+    {
+        <polyline points="@segment" class="moon-path" />
+    }
+    @foreach (var segment in Segments(s => (s.SunAltitude, s.SunAzimuth)))
+    {
+        <polyline points="@segment" class="sun-path" />
+    }
+
+    @if (Position.MoonAltitude > 0)
+    {
+        var (mx, my) = Point(Position.MoonAzimuth, Position.MoonAltitude);
+        <circle cx="@F(mx)" cy="@F(my)" r="8" class="moon-dot" />
+    }
+    @if (Position.SunAltitude > 0)
+    {
+        var (sx, sy) = Point(Position.SunAzimuth, Position.SunAltitude);
+        <circle cx="@F(sx)" cy="@F(sy)" r="9" class="sun-dot" />
+    }
+</svg>
+
+@code {
+    private const double R = 140;
+
+    [Parameter, EditorRequired] public AlmanacDay Day { get; set; } = default!;
+    [Parameter, EditorRequired] public SkyPosition Position { get; set; } = default!;
+
+    private static double Radius(double altitude) => R * (90 - altitude) / 90;
+
+    private static (double X, double Y) Point(double azimuth, double altitude)
+    {
+        var r = Radius(altitude);
+        var a = azimuth * Math.PI / 180;
+        return (r * Math.Sin(a), -r * Math.Cos(a));
+    }
+
+    // the day's path split into the stretches above the horizon, so no line jumps across a set/rise gap
+    private IEnumerable<string> Segments(Func<SkySample, (double Alt, double Az)> pick)
+    {
+        var points = new List<string>();
+        foreach (var (alt, az) in Day.Samples.Select(pick))
+        {
+            if (alt >= 0)
+            {
+                var (x, y) = Point(az, alt);
+                points.Add($"{F(x)},{F(y)}");
+                continue;
+            }
+
+            if (points.Count > 1) yield return string.Join(" ", points);
+            points.Clear();
+        }
+
+        if (points.Count > 1) yield return string.Join(" ", points);
+    }
+
+    private static string F(double value) => value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}

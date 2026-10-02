@@ -1,0 +1,54 @@
+@* Moon as seen by the observer: the lit limb faces the sun, right when waxing in the northern hemisphere *@
+<svg class="moon-disc" viewBox="-80 -80 160 160" role="img" aria-label="@($"{Fraction:P0} illuminated")">
+    <defs>
+        <radialGradient id="moonGlow">
+            <stop offset="55%" stop-color="#f6f1dc" stop-opacity="0.35" />
+            <stop offset="100%" stop-color="#f6f1dc" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="moonLit" cx="40%" cy="35%" r="75%">
+            <stop offset="0%" stop-color="#fffdf2" />
+            <stop offset="70%" stop-color="#e9e2c7" />
+            <stop offset="100%" stop-color="#c9c0a0" />
+        </radialGradient>
+        <clipPath id="moonLitClip">
+            <path d="@LitPath" transform="@Mirror" />
+        </clipPath>
+    </defs>
+
+    <circle r="78" fill="url(#moonGlow)" opacity="@((0.25 + 0.75 * Fraction).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))" />
+    <circle r="@R" fill="#1d2236" />
+    <path d="@LitPath" transform="@Mirror" fill="url(#moonLit)" />
+    <g clip-path="url(#moonLitClip)" fill="#a99f7e" opacity="0.35">
+        <circle cx="-18" cy="-20" r="11" />
+        <circle cx="16" cy="-6" r="8" />
+        <circle cx="-4" cy="22" r="13" />
+        <circle cx="26" cy="24" r="6" />
+        <circle cx="-30" cy="10" r="5" />
+        <circle cx="8" cy="-34" r="5" />
+    </g>
+    <circle r="@R" fill="none" stroke="#ffffff" stroke-opacity="0.08" />
+</svg>
+
+@code {
+    private const double R = 56;
+
+    [Parameter] public double Fraction { get; set; }
+    [Parameter] public bool Waxing { get; set; }
+    [Parameter] public bool Southern { get; set; }
+
+    private bool LitOnRight => Waxing != Southern;
+
+    private string Mirror => LitOnRight ? "" : "scale(-1,1)";
+
+    // lit limb on the right: outer half circle from top to bottom, then the terminator ellipse back up;
+    // the terminator bulges right (sweep 0) for a crescent and left (sweep 1) for a gibbous moon
+    private string LitPath
+    {
+        get
+        {
+            var rx = R * Math.Abs(1 - 2 * Fraction);
+            var sweep = Fraction < 0.5 ? 0 : 1;
+            return FormattableString.Invariant($"M 0 {-R} A {R} {R} 0 0 1 0 {R} A {rx:F2} {R} 0 0 {sweep} 0 {-R} Z");
+        }
+    }
+}

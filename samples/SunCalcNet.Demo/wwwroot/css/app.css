@@ -1,0 +1,988 @@
+/* Sky Almanac: a quiet, printed-almanac look. Colour lives in the sky strip; everything else is ink on paper. */
+
+:root {
+    --paper: #f7f5f0;
+    --surface: #ffffff;
+    --ink: #1c1d22;
+    --ink-2: #4a4c55;
+    --ink-3: #6f717b;
+    --rule: #e4e1d8;
+    --rule-strong: #cfcbc0;
+    --accent: #b5650d;
+    --accent-ink: #ffffff;
+    --sun: #e0952b;
+    --moon: #7c8494;
+    --focus: #2f6fdf;
+    --ground: rgba(20, 18, 14, 0.28);
+
+    --radius: 10px;
+    --radius-sm: 6px;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --paper: #121317;
+        --surface: #1a1b21;
+        --ink: #ecebe6;
+        --ink-2: #b4b3ad;
+        --ink-3: #8d8d87;
+        --rule: #2a2b32;
+        --rule-strong: #3a3b44;
+        --accent: #f0a447;
+        --accent-ink: #1a1306;
+        --sun: #f2b04a;
+        --moon: #c3c8d4;
+        --focus: #7aa7ff;
+        --ground: rgba(0, 0, 0, 0.35);
+        color-scheme: dark;
+    }
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--paper);
+    -webkit-font-smoothing: antialiased;
+}
+
+#app {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 var(--space-5) var(--space-6);
+}
+
+a {
+    color: inherit;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 3px;
+}
+
+a:hover {
+    text-decoration-color: currentColor;
+}
+
+code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.86em;
+}
+
+time, .event-time, .readout dd {
+    font-variant-numeric: tabular-nums;
+}
+
+h1, h2, h3, p {
+    margin: 0;
+}
+
+:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.muted {
+    color: var(--ink-2);
+}
+
+/* top bar */
+
+.topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-5) 0 var(--space-4);
+    border-bottom: 1px solid var(--rule);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.brand strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.brand small {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-3);
+}
+
+.brand-mark {
+    width: 28px;
+    height: 28px;
+}
+
+.brand-mark circle {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.5;
+}
+
+.brand-mark path {
+    fill: var(--sun);
+}
+
+.toolbar {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-2);
+}
+
+.field {
+    display: grid;
+    gap: var(--space-1);
+}
+
+.field-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-3);
+}
+
+.field-error {
+    max-width: 30ch;
+    font-size: 13px;
+    color: #c0392b;
+}
+
+select, input[type="date"], input[type="number"], .btn, .icon-btn {
+    height: 36px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-sm);
+}
+
+select, input[type="date"], input[type="number"] {
+    padding: 0 var(--space-3);
+    min-width: 0;
+}
+
+select {
+    min-width: 160px;
+}
+
+input[type="number"] {
+    width: 130px;
+}
+
+.date-nav {
+    display: flex;
+}
+
+.date-nav input {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+}
+
+.icon-btn {
+    width: 34px;
+    padding: 0;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.date-nav .icon-btn:first-child {
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.date-nav .icon-btn:last-child {
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 var(--space-4);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.btn:hover, .icon-btn:hover {
+    border-color: var(--ink-3);
+}
+
+.btn:disabled {
+    cursor: progress;
+    opacity: 0.6;
+}
+
+.btn-quiet {
+    background: transparent;
+}
+
+.coords summary {
+    list-style: none;
+}
+
+.coords summary::-webkit-details-marker {
+    display: none;
+}
+
+.coords summary::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    margin-left: var(--space-2);
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+}
+
+.coords[open] summary::after {
+    transform: translateY(1px) rotate(-135deg);
+}
+
+.coords-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + var(--space-2));
+    z-index: 20;
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--surface);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* summary: the answer first */
+
+main {
+    padding-top: var(--space-6);
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    gap: var(--space-6);
+    align-items: end;
+}
+
+.overline {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-3);
+}
+
+.headline {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: var(--space-6);
+    row-gap: var(--space-1);
+    margin-top: var(--space-2);
+    font-size: clamp(30px, 4.6vw, 48px);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+}
+
+.headline span {
+    color: var(--ink-3);
+    font-weight: 500;
+}
+
+.headline time {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.lede {
+    margin-top: var(--space-3);
+    font-size: 17px;
+    color: var(--ink-2);
+}
+
+.meta {
+    margin-top: var(--space-2);
+    font-size: 13px;
+    color: var(--ink-3);
+}
+
+.now {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    font-size: 14px;
+    color: var(--ink-2);
+}
+
+.now-state {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-1);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.key {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: var(--space-2);
+    border-radius: 50%;
+    vertical-align: 1px;
+}
+
+.key.sun {
+    background: var(--sun);
+}
+
+.key.moon {
+    background: var(--moon);
+}
+
+/* the day strip */
+
+.day {
+    margin-top: var(--space-6);
+}
+
+.ribbon {
+    position: relative;
+}
+
+.ribbon-events, .ribbon-hours {
+    position: relative;
+    height: 22px;
+    font-size: 12px;
+    color: var(--ink-2);
+}
+
+.ribbon-event, .ribbon-hours span {
+    position: absolute;
+    bottom: 4px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.ribbon-event {
+    font-weight: 600;
+}
+
+.ribbon-event small {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--ink-3);
+}
+
+.ribbon-event.middle {
+    transform: translateX(-50%);
+}
+
+.ribbon-event.end {
+    transform: translateX(calc(-100% - 6px));
+}
+
+.ribbon-event.start {
+    transform: translateX(6px);
+}
+
+.ribbon-hours span {
+    top: 4px;
+    bottom: auto;
+    transform: translateX(-50%);
+    color: var(--ink-3);
+}
+
+.ribbon-hours span:first-child {
+    transform: none;
+}
+
+.ribbon-hours span:last-child {
+    transform: translateX(-100%);
+}
+
+.ribbon-sky {
+    position: relative;
+    height: 200px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.ribbon-sky svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.ribbon-sky .ground {
+    fill: var(--ground);
+}
+
+.ribbon-sky .horizon {
+    stroke: rgba(255, 255, 255, 0.55);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.ribbon-sky .event-line {
+    stroke: rgba(255, 255, 255, 0.4);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+    vector-effect: non-scaling-stroke;
+}
+
+.sun-curve {
+    fill: none;
+    stroke: #ffd27a;
+    stroke-width: 2.5;
+    vector-effect: non-scaling-stroke;
+}
+
+.moon-curve {
+    fill: none;
+    stroke: #e9ecf3;
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+    stroke-opacity: 0.85;
+    vector-effect: non-scaling-stroke;
+}
+
+.moon-mark {
+    position: absolute;
+    top: calc(50% + 8px);
+    transform: translateX(-50%);
+    padding: 1px 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    color: #fff;
+    background: rgba(10, 12, 24, 0.55);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.cursor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.85);
+    pointer-events: none;
+}
+
+.cursor-time {
+    position: absolute;
+    top: var(--space-2);
+    transform: translateX(-50%);
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    background: var(--surface);
+    border-radius: 999px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+}
+
+.body {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.body.sun {
+    background: #ffd27a;
+    box-shadow: 0 0 0 3px rgba(255, 210, 122, 0.35);
+}
+
+.body.moon {
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    background: #f1f3f8;
+    box-shadow: 0 0 0 2px rgba(10, 12, 24, 0.45);
+}
+
+/* the range input covers the whole strip: drag anywhere, or use arrow keys */
+.scrub {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: ew-resize;
+}
+
+.ribbon-sky:has(.scrub:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.hint {
+    margin-top: var(--space-1);
+    font-size: 12px;
+    color: var(--ink-3);
+}
+
+/* columns and cards */
+
+.columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--space-5);
+    margin-top: var(--space-6);
+    align-items: start;
+}
+
+.side {
+    display: grid;
+    gap: var(--space-5);
+}
+
+.card {
+    padding: var(--space-5);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+}
+
+.card-head {
+    margin-bottom: var(--space-4);
+}
+
+.card-head h2 {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.card-head p {
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--ink-3);
+}
+
+.group-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin: var(--space-5) 0 0;
+    padding-bottom: var(--space-1);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--rule-strong);
+}
+
+.card-head + .group-title {
+    margin-top: 0;
+}
+
+.group-title span {
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.events {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.events li {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 7px 0;
+    border-bottom: 1px solid var(--rule);
+}
+
+.events li:last-child {
+    border-bottom: 0;
+}
+
+.events li.past {
+    color: var(--ink-3);
+}
+
+.event-time {
+    font-weight: 600;
+}
+
+.event-name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.event-angle {
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3);
+}
+
+.dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.note {
+    margin-top: var(--space-4);
+    padding: var(--space-3);
+    font-size: 13px;
+    color: var(--ink-2);
+    background: var(--paper);
+    border-radius: var(--radius-sm);
+}
+
+/* moon */
+
+.moon-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.moon-disc {
+    flex: none;
+    width: 96px;
+    height: 96px;
+}
+
+.moon-phase {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.readout {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-4);
+    margin: var(--space-4) 0 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--rule);
+}
+
+.readout.compact {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+}
+
+.readout.compact > div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.readout dt {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 13px;
+    color: var(--ink-3);
+}
+
+.readout.compact dt {
+    gap: 0;
+}
+
+.readout dd {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.readout.compact dd {
+    font-size: 14px;
+}
+
+/* sky map */
+
+.compass {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+.compass .dome {
+    fill: var(--paper);
+    stroke: var(--rule-strong);
+}
+
+.compass .ring, .compass .spoke {
+    fill: none;
+    stroke: var(--rule);
+}
+
+.compass .ring-label {
+    fill: var(--ink-3);
+    font-size: 10px;
+}
+
+.compass .cardinal {
+    fill: var(--ink-2);
+    font-size: 13px;
+    font-weight: 600;
+    text-anchor: middle;
+}
+
+.compass .sun-path {
+    fill: none;
+    stroke: var(--sun);
+    stroke-width: 2;
+}
+
+.compass .moon-path {
+    fill: none;
+    stroke: var(--moon);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+}
+
+.compass .sun-dot {
+    fill: var(--sun);
+    stroke: var(--surface);
+    stroke-width: 3;
+}
+
+.compass .moon-dot {
+    fill: var(--moon);
+    stroke: var(--surface);
+    stroke-width: 3;
+}
+
+/* info icons: the tooltip is anchored to the row but shown only while its icon is hovered */
+
+.with-info {
+    position: relative;
+}
+
+.readout .with-info {
+    position: static;
+}
+
+.info {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--rule-strong);
+    background: transparent;
+    color: var(--ink-3);
+    font: italic 600 10px/1 Georgia, serif;
+    cursor: help;
+}
+
+.info:hover, .info:focus-visible {
+    color: var(--accent-ink);
+    border-color: var(--accent);
+    background: var(--accent);
+}
+
+.tip {
+    position: absolute;
+    z-index: 10;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 4px);
+    padding: var(--space-2) var(--space-3);
+    font: 400 13px/1.45 Inter, system-ui, sans-serif;
+    font-style: normal;
+    color: var(--paper);
+    background: var(--ink);
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.1s ease, visibility 0.1s;
+}
+
+/* :focus-visible, not :focus, so a mouse click doesn't keep it open after the pointer leaves */
+.info:hover + .tip, .info:focus-visible + .tip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* footer */
+
+.footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-top: var(--space-7);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--rule);
+    font-size: 13px;
+    color: var(--ink-3);
+}
+
+/* boot screen */
+
+.boot {
+    display: grid;
+    place-items: center;
+    gap: var(--space-4);
+    min-height: 70vh;
+    color: var(--ink-3);
+}
+
+.boot-orbit {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 1px solid var(--rule-strong);
+    animation: spin 2s linear infinite;
+}
+
+.boot-orbit span {
+    position: absolute;
+    top: -6px;
+    left: calc(50% - 6px);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--sun);
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#blazor-error-ui {
+    display: none;
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1000;
+    padding: var(--space-3) var(--space-5);
+    color: #1b1b1b;
+    background: #ffe2b8;
+}
+
+#blazor-error-ui .dismiss {
+    position: absolute;
+    right: var(--space-4);
+    cursor: pointer;
+}
+
+/* responsive */
+
+@media (max-width: 900px) {
+    .summary, .columns {
+        grid-template-columns: 1fr;
+    }
+
+    .summary {
+        gap: var(--space-4);
+    }
+}
+
+@media (max-width: 600px) {
+    #app {
+        padding: 0 var(--space-4) var(--space-5);
+    }
+
+    .toolbar {
+        width: 100%;
+    }
+
+    .toolbar > .field:first-child {
+        flex: 1 1 100%;
+    }
+
+    .toolbar select {
+        width: 100%;
+    }
+
+    .toolbar > .field:nth-child(2) {
+        flex: 1;
+    }
+
+    .date-nav input {
+        flex: 1;
+    }
+
+    .coords-panel {
+        left: 0;
+    }
+
+    .ribbon-sky {
+        height: 160px;
+    }
+
+    .events li {
+        grid-template-columns: 4rem minmax(0, 1fr) auto;
+    }
+
+    .card {
+        padding: var(--space-4);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .boot-orbit {
+        animation: none;
+    }
+}

@@ -1,0 +1,379 @@
+@page "/"
+@using System.Globalization
+@using SunCalcNet.Demo.Components
+@using SunCalcNet.Demo.Services
+@using SunCalcNet.Model
+@inject IJSRuntime JS
+
+<PageTitle>@(day is null ? "Sky Almanac" : $"{day.Place.Name} · Sky Almanac")</PageTitle>
+
+<header class="topbar">
+    <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a10 10 0 0 1 0 20z" />
+        </svg>
+        <div>
+            <strong>Sky Almanac</strong>
+            <small>SunCalcNet demo</small>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <label class="field">
+            <span class="field-label">Place</span>
+            <select value="@placeName" @onchange="OnPlaceChanged">
+                @foreach (var p in AlmanacDay.Places)
+                {
+                    <option value="@p.Name">@p.Name</option>
+                }
+                <option value="@CustomName">Custom location</option>
+            </select>
+        </label>
+
+        <div class="field">
+            <span class="field-label" id="date-label">Date</span>
+            <div class="date-nav" role="group" aria-labelledby="date-label">
+                <button type="button" class="icon-btn" @onclick="() => ShiftDay(-1)" aria-label="Previous day">‹</button>
+                <input type="date" @bind="date" @bind:after="Recalculate" aria-label="Date" />
+                <button type="button" class="icon-btn" @onclick="() => ShiftDay(1)" aria-label="Next day">›</button>
+            </div>
+        </div>
+
+        <button type="button" class="btn" @onclick="GoToNow">Now</button>
+
+        <details class="coords" open="@coordsOpen">
+            <summary class="btn btn-quiet">Coordinates</summary>
+            <div class="coords-panel">
+                <label class="field">
+                    <span class="field-label">Latitude</span>
+                    <input type="number" step="0.0001" min="-90" max="90" @bind="lat" @bind:after="OnCoordinatesChanged" />
+                </label>
+                <label class="field">
+                    <span class="field-label">Longitude</span>
+                    <input type="number" step="0.0001" min="-180" max="180" @bind="lng" @bind:after="OnCoordinatesChanged" />
+                </label>
+                <button type="button" class="btn" @onclick="Locate" disabled="@locating">@(locating ? "Locating…" : "Use my location")</button>
+                @if (locateError is not null)
+                {
+                    <p class="field-error" role="alert">@locateError</p>
+                }
+            </div>
+        </details>
+    </div>
+</header>
+
+@if (day is not null && position is not null)
+{
+    var time = day.StartUtc.AddMinutes(minute);
+    var sunrise = day.Find(SunPhaseName.Sunrise);
+    var sunset = day.Find(SunPhaseName.Sunset);
+
+    <main>
+        <section class="summary" aria-labelledby="summary-title">
+            <div class="summary-main">
+                <p class="overline">@day.Place.Name · @day.Date.ToString("dddd d MMMM yyyy", CultureInfo.InvariantCulture)</p>
+                <h1 id="summary-title" class="headline">
+                    @if (sunrise is not null && sunset is not null)
+                    {
+                        <span>Sunrise <time>@Local(sunrise.Utc)</time></span>
+                        <span>Sunset <time>@Local(sunset.Utc)</time></span>
+                    }
+                    else if (IsPolarDay)
+                    {
+                        <span>Midnight sun</span>
+                    }
+                    else
+                    {
+                        <span>Polar night</span>
+                    }
+                </h1>
+                <p class="lede">@DaylightSentence()</p>
+                <p class="meta">
+                    Times in @day.Zone.Id (@day.UtcOffsetLabel(time)) · @F(day.Place.Lat, 4)°, @F(day.Place.Lng, 4)°
+                </p>
+            </div>
+
+            <div class="now" aria-live="polite">
+                <p class="overline">At @Local(time)</p>
+                <p class="now-state"><i class="swatch" style="background:@AlmanacDay.SkyColor(position.SunAltitude)"></i>@AlmanacDay.SkyState(position.SunAltitude)</p>
+                <p><span class="key sun"></span>@BodySentence("Sun", position.SunAltitude, position.SunAzimuth) @NextSunEvent(time)</p>
+                <p><span class="key moon"></span>@BodySentence("Moon", position.MoonAltitude, position.MoonAzimuth)</p>
+            </div>
+        </section>
+
+        <section class="day" aria-label="The day at a glance">
+            <DayRibbon Day="day" Position="position" Minute="minute" MinuteChanged="OnMinuteChanged" />
+            <p class="hint">Drag across the strip, or focus it and use the arrow keys, to move through the day.</p>
+        </section>
+
+        <div class="columns">
+            <section class="card" aria-labelledby="sun-title">
+                <header class="card-head">
+                    <h2 id="sun-title">Sun</h2>
+                    <p>From <code>SunCalc.GetSunPhases</code>; angles are the sun centre's altitude.</p>
+                </header>
+
+                @foreach (var (title, summary, events) in SunGroups(time))
+                {
+                    <h3 class="group-title">@title @if (summary is not null) { <span>@summary</span> }</h3>
+                    <ol class="events">
+                        @foreach (var e in events)
+                        {
+                            <li class="with-info @(e.Utc <= time ? "past" : "")">
+                                <time class="event-time">@Local(e.Utc)@DayHint(e.Utc)</time>
+                                <span class="event-name">
+                                    <i class="dot" style="background:@e.Color"></i>@e.Name
+                                    <InfoTip Label="@e.Name.Value" Text="@AlmanacDay.PhaseDescriptions.GetValueOrDefault(e.Name, "")" />
+                                </span>
+                                <span class="event-angle">@Angle(e.Name)</span>
+                            </li>
+                        }
+                    </ol>
+                }
+
+                @if (day.MissingSunEvents.Count > 0)
+                {
+                    <p class="note">Not reached today: @string.Join(", ", day.MissingSunEvents).</p>
+                }
+            </section>
+
+            <div class="side">
+                <section class="card" aria-labelledby="moon-title">
+                    <header class="card-head">
+                        <h2 id="moon-title">Moon</h2>
+                        <p>From <code>MoonCalc.GetMoonIllumination</code> and <code>GetMoonPhase</code>.</p>
+                    </header>
+                    <div class="moon-summary">
+                        <MoonDisc Fraction="day.Illumination.Fraction" Waxing="day.Illumination.Waxing" Southern="day.Place.Lat < 0" />
+                        <div>
+                            <p class="moon-phase">@AlmanacDay.PhaseName(day.Illumination.Phase)</p>
+                            <p class="muted">@F(day.Illumination.Fraction * 100, 0)% illuminated, @(day.Illumination.Waxing ? "waxing" : "waning")</p>
+                            <p class="muted">@position.MoonDistance.ToString("N0", CultureInfo.InvariantCulture) km away</p>
+                        </div>
+                    </div>
+                    <dl class="readout">
+                        <MoonReadout Label="Moonrise" Time="day.Moon.Rise" Description="@AlmanacDay.MoonDescriptions.Rise" Day="day" />
+                        <MoonReadout Label="Moonset" Time="day.Moon.Set" Description="@AlmanacDay.MoonDescriptions.Set" Day="day" />
+                        <MoonReadout Label="Highest" Time="day.Moon.Transit" Description="@AlmanacDay.MoonDescriptions.Transit" Day="day" IsTransit="true" />
+                        <MoonReadout Label="Lowest" Time="day.Moon.LowerTransit" Description="@AlmanacDay.MoonDescriptions.LowerTransit" Day="day" IsTransit="true" />
+                    </dl>
+                    @if (day.Moon.AlwaysUp)
+                    {
+                        <p class="note">The moon stays above the horizon all day.</p>
+                    }
+                    else if (day.Moon.AlwaysDown)
+                    {
+                        <p class="note">The moon stays below the horizon all day.</p>
+                    }
+                </section>
+
+                <section class="card" aria-labelledby="sky-title">
+                    <header class="card-head">
+                        <h2 id="sky-title">Where to look at @Local(time)</h2>
+                        <p>Sky seen from above: overhead in the centre, horizon at the edge.</p>
+                    </header>
+                    <SkyCompass Day="day" Position="position" />
+                    <dl class="readout compact">
+                        <div><dt><span class="key sun"></span>Sun</dt><dd>@F(position.SunAltitude, 1)° · @F(position.SunAzimuth, 0)° @Compass(position.SunAzimuth)</dd></div>
+                        <div><dt><span class="key moon"></span>Moon</dt><dd>@F(position.MoonAltitude, 1)° · @F(position.MoonAzimuth, 0)° @Compass(position.MoonAzimuth)</dd></div>
+                    </dl>
+                </section>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <span>Built with <a href="https://github.com/kostebudinoski/SunCalcNet">SunCalcNet</a>, a .NET port of <a href="https://github.com/mourner/suncalc">SunCalc</a>. Vibe coded with AI.</span>
+            <span>Calculated in your browser in @F(computeMs, 0) ms</span>
+        </footer>
+    </main>
+}
+
+@code {
+    private const string CustomName = "custom";
+
+    private string placeName = "Copenhagen";
+    private double lat;
+    private double lng;
+    private DateOnly date;
+    private double minute;
+    private bool locating;
+    private string? locateError;
+    private bool coordsOpen;
+    private double computeMs;
+
+    private AlmanacDay? day;
+    private SkyPosition? position;
+
+    // e.g. ?place=Sydney&date=2026-06-21 opens a specific place and day
+    [SupplyParameterFromQuery(Name = "place")] public string? QueryPlace { get; set; }
+    [SupplyParameterFromQuery(Name = "date")] public string? QueryDate { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (AlmanacDay.Places.FirstOrDefault(x => string.Equals(x.Name, QueryPlace, StringComparison.OrdinalIgnoreCase)) is { } queried)
+        {
+            placeName = queried.Name;
+        }
+
+        SelectPlace(AlmanacDay.Places.First(x => x.Name == placeName));
+        GoToNow();
+
+        if (DateOnly.TryParseExact(QueryDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var queriedDate))
+        {
+            date = queriedDate;
+            minute = 12 * 60;
+            Recalculate();
+        }
+    }
+
+    private void OnPlaceChanged(ChangeEventArgs e)
+    {
+        placeName = e.Value?.ToString() ?? CustomName;
+        if (AlmanacDay.Places.FirstOrDefault(x => x.Name == placeName) is { } place)
+        {
+            SelectPlace(place);
+        }
+        else
+        {
+            coordsOpen = true;
+        }
+
+        Recalculate();
+    }
+
+    private void SelectPlace(Place place)
+    {
+        lat = place.Lat;
+        lng = place.Lng;
+    }
+
+    private void OnCoordinatesChanged()
+    {
+        placeName = CustomName;
+        Recalculate();
+    }
+
+    private void ShiftDay(int days)
+    {
+        date = date.AddDays(days);
+        Recalculate();
+    }
+
+    private void GoToNow()
+    {
+        var zone = AlmanacDay.FindZone(CurrentPlace().TimeZoneId);
+        date = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zone));
+        Recalculate();
+        minute = Math.Clamp((DateTime.UtcNow - day!.StartUtc).TotalMinutes, 0, day.LengthMinutes - 1);
+        UpdatePosition();
+    }
+
+    private async Task Locate()
+    {
+        locating = true;
+        locateError = null;
+        try
+        {
+            var coords = await JS.InvokeAsync<double[]>("skyAlmanac.locate");
+            lat = Math.Round(coords[0], 4);
+            lng = Math.Round(coords[1], 4);
+            placeName = CustomName;
+            GoToNow();
+        }
+        catch (JSException)
+        {
+            locateError = "Your location isn't available. Check the browser's permission, or enter coordinates.";
+        }
+        finally
+        {
+            locating = false;
+        }
+    }
+
+    private void Recalculate()
+    {
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
+        day = new AlmanacDay(CurrentPlace(), date);
+        minute = Math.Clamp(minute, 0, day.LengthMinutes - 1);
+        UpdatePosition();
+        computeMs = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+    }
+
+    private void OnMinuteChanged(double value)
+    {
+        minute = value;
+        UpdatePosition();
+    }
+
+    private void UpdatePosition() => position = day!.PositionAt(day.StartUtc.AddMinutes(minute));
+
+    // a custom location uses the browser's own time zone for display
+    private Place CurrentPlace() =>
+        AlmanacDay.Places.FirstOrDefault(x => x.Name == placeName)
+        ?? new Place($"{F(lat, 2)}°, {F(lng, 2)}°", Math.Clamp(lat, -90, 90), Math.Clamp(lng, -180, 180), TimeZoneInfo.Local.Id);
+
+    private bool IsPolarDay => day!.Samples.All(x => x.SunAltitude > -0.833);
+
+    private string Local(DateTime utc) => day!.ToLocal(utc).ToString("HH:mm");
+
+    // polar days put some events on the neighbouring calendar date; say so instead of hiding them
+    private string DayHint(DateTime utc) =>
+        day!.IsToday(utc) ? "" : day.ToLocal(utc) < day.ToLocal(day.StartUtc) ? " −1d" : " +1d";
+
+    private string DaylightSentence()
+    {
+        if (day!.DayLength is not { } length)
+        {
+            return IsPolarDay ? "The sun stays above the horizon all day." : "The sun stays below the horizon all day.";
+        }
+
+        var sentence = $"{Duration(length)} of daylight";
+        if (day.DayLengthChange is { } change && Math.Abs(change.TotalSeconds) >= 30)
+        {
+            sentence += $", {Duration(change.Duration())} {(change > TimeSpan.Zero ? "longer" : "shorter")} than yesterday";
+        }
+
+        return sentence + ".";
+    }
+
+    private static string BodySentence(string body, double altitude, double azimuth) =>
+        altitude >= 0
+            ? $"{body} {F(altitude, 0)}° up in the {Compass(azimuth)}."
+            : $"{body} below the horizon ({F(altitude, 0)}°).";
+
+    private string NextSunEvent(DateTime time)
+    {
+        var next = day!.SunEvents.FirstOrDefault(e => e.Utc > time && (e.Name == SunPhaseName.Sunrise || e.Name == SunPhaseName.Sunset));
+        return next is null ? "" : $"{(next.Name == SunPhaseName.Sunrise ? "Rises" : "Sets")} in {Duration(next.Utc - time)}.";
+    }
+
+    // morning (up to solar noon), noon itself, and evening, each with the length of its twilight
+    private IEnumerable<(string Title, string? Summary, IReadOnlyList<SunEvent> Events)> SunGroups(DateTime time)
+    {
+        var noon = day!.SolarNoonUtc;
+        var morning = day.SunEvents.Where(e => e.Utc < noon).ToList();
+        var evening = day.SunEvents.Where(e => e.Utc > noon).ToList();
+
+        yield return ("Morning", Twilight(SunPhaseName.NightEnd, SunPhaseName.Sunrise, "before sunrise"), morning);
+        yield return ("Midday", null, day.SunEvents.Where(e => e.Utc == noon).ToList());
+        yield return ("Evening", Twilight(SunPhaseName.Sunset, SunPhaseName.Night, "after sunset"), evening);
+    }
+
+    private string? Twilight(SunPhaseName from, SunPhaseName to, string relation) =>
+        day!.Find(from) is { } a && day.Find(to) is { } b ? $"{Duration(b.Utc - a.Utc)} of twilight {relation}" : null;
+
+    private static string Angle(SunPhaseName name) =>
+        AlmanacDay.PhaseAngle(name) is { } angle ? (angle < 0 ? "−" : "+") + Math.Abs(angle).ToString("0.###", CultureInfo.InvariantCulture) + "°" : "";
+
+    private static string Duration(TimeSpan span) =>
+        span.TotalMinutes < 60 ? $"{(int)Math.Round(span.TotalMinutes)} min" : $"{(int)span.TotalHours} h {span.Minutes} min";
+
+    private static string Compass(double azimuth)
+    {
+        string[] points = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        return points[(int)Math.Round(azimuth / 22.5) % 16];
+    }
+
+    private static string F(double value, int decimals) => value.ToString($"F{decimals}", CultureInfo.InvariantCulture);
+}

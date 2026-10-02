@@ -1,0 +1,8 @@
+@* small "i" icon; its explanation shows only while the icon is hovered (or focused from the keyboard) *@
+<button type="button" class="info" aria-label="@($"About {Label}")">i</button>
+<span class="tip" role="tooltip">@Text</span>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter, EditorRequired] public string Text { get; set; } = "";
+}
