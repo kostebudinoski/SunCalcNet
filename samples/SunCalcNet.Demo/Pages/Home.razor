@@ -325,7 +325,7 @@
         var zone = AlmanacDay.FindZone(CurrentPlace().TimeZoneId);
         date = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(moment, zone));
         Recalculate();
-        minute = Math.Clamp((moment - day!.StartUtc).TotalMinutes, 0, day.LengthMinutes - 1);
+        minute = Math.Clamp(Math.Floor((moment - day!.StartUtc).TotalMinutes), 0, day.LengthMinutes - 1);
         UpdatePosition();
     }
 
@@ -337,7 +337,7 @@
 
     // the current local time of day at the selected place, in minutes after midnight
     private double MinutesIntoDayThere() =>
-        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, AlmanacDay.FindZone(CurrentPlace().TimeZoneId)).TimeOfDay.TotalMinutes;
+        Math.Floor(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, AlmanacDay.FindZone(CurrentPlace().TimeZoneId)).TimeOfDay.TotalMinutes);
 
     private DateOnly TodayThere() =>
         DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, AlmanacDay.FindZone(CurrentPlace().TimeZoneId)));
@@ -347,7 +347,8 @@
         var zone = AlmanacDay.FindZone(CurrentPlace().TimeZoneId);
         date = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zone));
         Recalculate();
-        minute = Math.Clamp((DateTime.UtcNow - day!.StartUtc).TotalMinutes, 0, day.LengthMinutes - 1);
+        // whole minutes, like a clock: 11:31:40 shows as 11:31, never ahead of the real time
+        minute = Math.Clamp(Math.Floor((DateTime.UtcNow - day!.StartUtc).TotalMinutes), 0, day.LengthMinutes - 1);
         UpdatePosition();
     }
 
