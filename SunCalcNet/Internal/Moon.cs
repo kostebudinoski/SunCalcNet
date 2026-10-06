@@ -147,6 +147,15 @@ internal static class Moon
     /// <returns>Geocentric coordinates of the Moon (right ascension, declination, distance in km).</returns>
     internal static GeocentricCoords GetGeocentricCoords(double daysSinceJ2000Tt)
     {
+        return GetEphemeris(daysSinceJ2000Tt).Equatorial;
+    }
+
+    /// <summary>
+    /// Geocentric coordinates of the Moon together with its apparent ecliptic longitude, Meeus ch. 47.
+    /// </summary>
+    /// <param name="daysSinceJ2000Tt">Days since J2000.0 in Terrestrial Time (see <see cref="AstroTime.ToDaysTt"/>).</param>
+    internal static MoonEphemeris GetEphemeris(double daysSinceJ2000Tt)
+    {
         var t = daysSinceJ2000Tt / 36525;
 
         // fundamental arguments (degrees), 47.1–47.6
@@ -197,6 +206,6 @@ internal static class Moon
         var declination = Position.GetDeclination(l, b, nutation.Obliquity); // 13.4
         var dist = 385000.56 + sr / 1000; // distance to the Moon in km
 
-        return new GeocentricCoords(ra, declination, dist);
+        return new MoonEphemeris(new GeocentricCoords(ra, declination, dist), l);
     }
 }

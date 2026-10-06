@@ -87,59 +87,37 @@ public static class Upcoming
     }
 
     /// <summary>
-    /// The first of each principal phase in the month after <paramref name="start"/>, from the illuminated fraction:
-    /// new and full moon at its minimum and maximum (the least and greatest phase angle, within minutes of conjunction
-    /// and opposition), quarters where it crosses one half. 6-hour samples bracket each, then a search refines it.
+    /// The first of each principal phase in the month after <paramref name="start"/>: where
+    /// <c>GetMoonIllumination().Phase</c> passes 0, 0.25, 0.5 and 0.75. Since SunCalcNet 3.0.1 the phase comes from
+    /// the moon–sun difference in ecliptic longitude, so these are the exact USNO instants. 6-hour samples bracket
+    /// each crossing, then bisection refines it.
     /// </summary>
     private static IEnumerable<(DateTimeOffset When, MoonPhaseKind Phase)> FindPhases(DateTimeOffset start)
     {
-        static double Fraction(DateTimeOffset t) => MoonCalc.GetMoonIllumination(t).Fraction;
+        (double Target, MoonPhaseKind Kind)[] targets =
+            [(0, MoonPhaseKind.New), (0.25, MoonPhaseKind.FirstQuarter), (0.5, MoonPhaseKind.Full), (0.75, MoonPhaseKind.LastQuarter)];
 
-        var found = new HashSet<MoonPhaseKind>();
-        var samples = Enumerable.Range(0, 4 * 31).Select(i => start.AddHours(6 * i)).ToList();
-        var f = samples.Select(Fraction).ToList();
-
-        for (var i = 1; i < samples.Count - 1 && found.Count < 4; i++)
+        foreach (var (target, kind) in targets)
         {
-            if (f[i] <= f[i - 1] && f[i] < f[i + 1] && found.Add(MoonPhaseKind.New))
-            {
-                yield return (Extremum(samples[i - 1], samples[i + 1], t => Fraction(t)), MoonPhaseKind.New);
-            }
-            else if (f[i] >= f[i - 1] && f[i] > f[i + 1] && found.Add(MoonPhaseKind.Full))
-            {
-                yield return (Extremum(samples[i - 1], samples[i + 1], t => -Fraction(t)), MoonPhaseKind.Full);
-            }
+            // signed distance past the target, wrapped to [-0.5, 0.5): the phase only increases, so a crossing
+            // shows as this going from negative to non-negative
+            double Past(DateTimeOffset t) => ((MoonCalc.GetMoonIllumination(t).Phase - target) % 1 + 1.5) % 1 - 0.5;
 
-            if (f[i - 1] < 0.5 && f[i] >= 0.5 && found.Add(MoonPhaseKind.FirstQuarter))
+            var a = start;
+            var pa = Past(a);
+            for (var i = 0; i < 4 * 31; i++)
             {
-                yield return (Crossing(samples[i - 1], samples[i], t => Fraction(t) - 0.5), MoonPhaseKind.FirstQuarter);
-            }
-            else if (f[i - 1] > 0.5 && f[i] <= 0.5 && found.Add(MoonPhaseKind.LastQuarter))
-            {
-                yield return (Crossing(samples[i - 1], samples[i], t => 0.5 - Fraction(t)), MoonPhaseKind.LastQuarter);
+                var b = a.AddHours(6);
+                var pb = Past(b);
+                if (pa < 0 && pb >= 0)
+                {
+                    yield return (Crossing(a, b, Past), kind);
+                    break;
+                }
+
+                (a, pa) = (b, pb);
             }
         }
-    }
-
-    // minimum of a function in [a, b] by golden-section search, to well under a minute
-    private static DateTimeOffset Extremum(DateTimeOffset a, DateTimeOffset b, Func<DateTimeOffset, double> f)
-    {
-        const double r = 0.6180339887;
-        for (var i = 0; i < 30; i++)
-        {
-            var c = b - (b - a) * r;
-            var d = a + (b - a) * r;
-            if (f(c) < f(d))
-            {
-                b = d;
-            }
-            else
-            {
-                a = c;
-            }
-        }
-
-        return a + (b - a) / 2;
     }
 
     // where a rising function crosses zero in [a, b], by bisection

@@ -12,6 +12,15 @@ internal static class Sun
     /// <returns>Apparent equatorial coordinates of the Sun.</returns>
     internal static EquatorialCoords GetApparentEquatorialCoords(double daysSinceJ2000Tt)
     {
+        return GetEphemeris(daysSinceJ2000Tt).Equatorial;
+    }
+
+    /// <summary>
+    /// Sun's apparent equatorial coordinates together with its apparent ecliptic longitude.
+    /// </summary>
+    /// <param name="daysSinceJ2000Tt">Days since J2000.0 in Terrestrial Time (see <see cref="AstroTime.ToDaysTt"/>).</param>
+    internal static SunEphemeris GetEphemeris(double daysSinceJ2000Tt)
+    {
         var t = daysSinceJ2000Tt / 36525; // Julian centuries since J2000
 
         var l0 = Constants.Rad * (280.46646 + t * (36000.76983 + t * 0.0003032)); // 25.2 geometric mean longitude
@@ -31,6 +40,6 @@ internal static class Sun
         var ra = Position.GetRightAscension(l, 0, e); // 25.6
         var dec = Position.GetDeclination(l, 0, e); // 25.7
 
-        return new EquatorialCoords(ra, dec);
+        return new SunEphemeris(new EquatorialCoords(ra, dec), l);
     }
 }

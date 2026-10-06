@@ -43,8 +43,10 @@ public static class MoonCalc
     {
         var d = AstroTime.ToDaysTt(date.ToDaysSinceJ2000());
         const int sdist = 149598000; // distance from Earth to Sun in km
-        var sunCoords = Sun.GetApparentEquatorialCoords(d);
-        var moonCoords = Moon.GetGeocentricCoords(d);
+        var sun = Sun.GetEphemeris(d);
+        var moon = Moon.GetEphemeris(d);
+        var sunCoords = sun.Equatorial;
+        var moonCoords = moon.Equatorial;
 
         var phi = Math.Acos(Math.Sin(sunCoords.Declination) * Math.Sin(moonCoords.Declination) +
                             Math.Cos(sunCoords.Declination) * Math.Cos(moonCoords.Declination) *
@@ -58,9 +60,13 @@ public static class MoonCalc
             Math.Cos(sunCoords.Declination) * Math.Sin(moonCoords.Declination) *
             Math.Cos(sunCoords.RightAscension - moonCoords.RightAscension));
 
-        var waxing = angle < 0; // bright limb leads -> illuminated fraction is growing (new -> full)
+        // elongation in ecliptic longitude, which defines the named phases (Meeus ch. 49, USNO); the right
+        // ascension difference behind `angle` crosses 0/180° hours off conjunction/opposition near the nodes
+        var phase = ((moon.EclipticLongitude - sun.EclipticLongitude) / (2 * Math.PI) % 1 + 1) % 1;
+        var waxing = phase < 0.5;
+
+        // reaches exactly 0 or 1 only at perfect syzygy (an eclipse), so a full moon usually peaks just under 1
         var fraction = (1 + Math.Cos(inc)) / 2;
-        var phase = 0.5 + 0.5 * inc * (waxing ? -1 : 1) / Math.PI;
 
         return new MoonIllumination(fraction, phase, angle, waxing);
     }

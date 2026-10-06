@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -15,6 +15,10 @@
   
   <ItemGroup>
     <ProjectReference Include="..\SunCalcNet\SunCalcNet.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Fixtures\moon-phases.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   
 </Project>

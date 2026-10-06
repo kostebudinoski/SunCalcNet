@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using SunCalcNet.Model;
 using Xunit;
 
@@ -35,7 +39,7 @@ public class MoonCalcTests
 
         //Assert
         Assert.Equal(0.4911927817602366, moonIllum.Fraction, 12);
-        Assert.Equal(0.7528035696247392, moonIllum.Phase, 12);
+        Assert.Equal(0.7531998905377861, moonIllum.Phase, 12);
         Assert.Equal(1.6763844401987489, moonIllum.Angle, 12);
         Assert.False(moonIllum.Waxing); // phase > 0.5 -> waning
     }
@@ -208,6 +212,84 @@ public class MoonCalcTests
         }
 
         Assert.InRange(skipped, 1, 3);
+    }
+
+    [Fact]
+    public void Get_Moon_Illumination_Phase_Passes_The_Named_Values_At_The_USNO_Phase_Instants()
+    {
+        //Arrange
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "moon-phases.json");
+        var phases = JsonSerializer.Deserialize<JsonElement[][]>(File.ReadAllText(path))!
+            .Select(x => (Usno: DateTimeOffset.Parse(x[0].GetString()!, CultureInfo.InvariantCulture), Target: x[1].GetDouble()))
+            .ToList();
+
+        //Act
+        var errors = phases.Select(p => Math.Abs((PhaseCrossing(p.Usno, p.Target) - p.Usno).TotalMinutes)).ToList();
+
+        //Assert
+        // USNO times are rounded to the minute, so about half a minute on average is the floor
+        Assert.Equal(148, errors.Count);
+        Assert.True(errors.Average() < 1, $"mean {errors.Average():F2} min");
+        Assert.True(errors.Max() < 2, $"max {errors.Max():F2} min");
+    }
+
+    [Theory]
+    [InlineData("2026-03-19T01:23Z", 0)]
+    [InlineData("2026-06-29T23:56Z", 0.5)]
+    [InlineData("2026-10-10T15:50Z", 0)]
+    [InlineData("2026-10-26T04:12Z", 0.5)]
+    [InlineData("2026-11-24T14:53Z", 0.5)]
+    [InlineData("2026-12-09T00:52Z", 0)]
+    public void Get_Moon_Illumination_New_And_Full_Moon_Match_USNO_Not_Right_Ascension(string usno, double target)
+    {
+        //Arrange
+        var expected = DateTimeOffset.Parse(usno, CultureInfo.InvariantCulture);
+
+        //Act
+        var crossing = PhaseCrossing(expected, target);
+
+        //Assert
+        var offMinutes = (crossing - expected).TotalMinutes;
+        Assert.True(Math.Abs(offMinutes) < 2, $"phase passes {target} at {crossing:u}, {offMinutes:F1} min from USNO {usno}");
+    }
+
+    [Fact]
+    public void Get_Moon_Illumination_Waxing_Flips_At_The_Full_Moon()
+    {
+        //Arrange
+        var fullMoon = new DateTimeOffset(2026, 10, 26, 4, 12, 0, TimeSpan.Zero);
+
+        //Act
+        var before = MoonCalc.GetMoonIllumination(fullMoon.AddMinutes(-10));
+        var after = MoonCalc.GetMoonIllumination(fullMoon.AddMinutes(10));
+
+        //Assert
+        Assert.True(before.Waxing);
+        Assert.False(after.Waxing);
+        Assert.InRange(before.Phase, 0.49, 0.5);
+        Assert.InRange(after.Phase, 0.5, 0.51);
+    }
+
+    // the instant within ±12 h of `around` where the phase passes `target`; the signed offset wraps across 0/1
+    private static DateTimeOffset PhaseCrossing(DateTimeOffset around, double target)
+    {
+        double Past(DateTimeOffset t) => ((MoonCalc.GetMoonIllumination(t).Phase - target) % 1 + 1.5) % 1 - 0.5;
+
+        DateTimeOffset a = around.AddHours(-12), b = around.AddHours(12);
+        while ((b - a).TotalSeconds > 1)
+        {
+            var mid = a + (b - a) / 2;
+            if (Past(mid) < 0)
+            {
+                a = mid;
+            }
+            else
+            {
+                b = mid;
+            }
+        }
+
+        return b;
     }
 
     private static DateTimeOffset Utc(int year, int month, int day, int hour = 0, int minute = 0) =>
