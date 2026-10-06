@@ -17,7 +17,7 @@
                     else
                     {
                         <span class="light-name">@window.Name</span>
-                        <span class="light-time"><time>@window.Start.ToString("HH:mm")</time>–<time>@window.End.ToString("HH:mm")</time></span>
+                        <span class="light-time"><time>@window.Start.Clock()</time>–<time>@window.End.Clock()</time></span>
                         <CalendarButton Title="@($"{session.Title} {window.Name.ToLowerInvariant()}")" Description="@WindowDescription(window, kind)"
                                         Place="Place" Day="Day" Start="window.Start" End="window.End" />
                         <span class="light-meta">
@@ -38,7 +38,7 @@
                 <div class="light-row">
                     <i class="light-swatch dark" aria-hidden="true"></i>
                     <span class="light-name">Dark sky</span>
-                    <span class="light-time"><time>@window.Start.ToString("HH:mm")</time>–<time>@window.End.ToString("HH:mm")</time></span>
+                    <span class="light-time"><time>@window.Start.Clock()</time>–<time>@window.End.Clock()</time></span>
                     <CalendarButton Title="Dark sky for stargazing" Description="Sun more than 18° below the horizon and the moon down."
                                     Place="Place" Day="Day" Start="window.Start" End="window.End" />
                     <span class="light-meta">@Duration(window.Length) · sun below −18°, moon down</span>

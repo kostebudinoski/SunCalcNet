@@ -43,7 +43,7 @@
             </div>
             <div class="up-when">
                 <time datetime="@e.When.ToString("O")">@e.Day.ToString("ddd d MMM", CultureInfo.InvariantCulture)</time>
-                <small>@Relative(e.Day)@(e.ShowTime ? " · " + e.When.ToString("HH:mm") : "")</small>
+                <small>@Relative(e.Day)@(e.ShowTime ? " · " + e.When.Clock() : "")</small>
                 <span class="up-actions">
                     <CalendarButton Title="@e.Title" Description="@e.Detail" Place="Place" Day="e.Day"
                                     Start="@(e.Kind is UpcomingKind.Clock or UpcomingKind.Polar ? null : e.When)" />

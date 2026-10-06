@@ -913,6 +913,26 @@ main {
     stroke-dasharray: 4 3;
 }
 
+.compass .path-end circle {
+    fill: var(--surface);
+    stroke-width: 1.5;
+}
+
+.compass .path-end.moon circle {
+    stroke: var(--moon);
+}
+
+.compass .path-end.sun circle {
+    stroke: var(--sun);
+}
+
+.compass .path-end text {
+    fill: var(--ink-3);
+    font-size: 10px;
+    text-anchor: middle;
+    font-variant-numeric: tabular-nums;
+}
+
 .compass .sun-dot {
     fill: var(--sun);
     stroke: var(--surface);

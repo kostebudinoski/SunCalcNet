@@ -93,7 +93,7 @@
             </div>
             <p class="window-periods">
                 @{ var sunny = result.Periods.Where(p => !p.Blocked).ToList(); }
-                @(sunny.Count == 0 ? "No direct sun" : string.Join(", ", sunny.Select(p => $"{p.Start:HH:mm}–{p.End:HH:mm}")))
+                @(sunny.Count == 0 ? "No direct sun" : string.Join(", ", sunny.Select(p => $"{p.Start.Clock()}–{p.End.Clock()}")))
             </p>
         </div>
     }

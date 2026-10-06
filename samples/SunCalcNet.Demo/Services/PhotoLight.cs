@@ -172,7 +172,7 @@ public sealed class PhotoLight
 
             var gap = $"{Math.Abs((m - s).TotalMinutes):0} min {(m < s ? "before" : "after")} {sunEvent}";
             return new MoonShot(
-                $"Moon{moonEvent} at {day.ToLocal(m):HH:mm}, {gap} ({lit}): a big moon low over the horizon in soft light",
+                $"Moon{moonEvent} at {day.ToLocal(m).Clock()}, {gap} ({lit}): a big moon low over the horizon in soft light",
                 $"the {moonName} {moonEvent}s {gap}",
                 evening);
         }
@@ -200,7 +200,7 @@ public sealed class PhotoLight
             if (session.GoldenHour is { } golden && golden.End > at)
             {
                 return golden.Start <= at
-                    ? ("Good light now", $"golden hour until {golden.End:HH:mm}{LightFrom(golden)}")
+                    ? ("Good light now", $"golden hour until {golden.End.Clock()}{LightFrom(golden)}")
                     : ("Next good light", Describe(name, golden));
             }
         }
@@ -209,14 +209,14 @@ public sealed class PhotoLight
         {
             var dark = DarkSky[0];
             var label = Morning.GoldenHour is null && Evening.GoldenHour is null ? "Tonight" : "Still to come";
-            return (label, $"dark sky {dark.Start:HH:mm}–{dark.End:HH:mm} for stargazing");
+            return (label, $"dark sky {dark.Start.Clock()}–{dark.End.Clock()} for stargazing");
         }
 
         return DarkSkyNote is null ? null : ("Tonight", char.ToLowerInvariant(DarkSkyNote[0]) + DarkSkyNote[1..]);
     }
 
     private static string Describe(string partOfDay, LightWindow golden) =>
-        $"{partOfDay} golden hour {golden.Start:HH:mm}–{golden.End:HH:mm}{LightFrom(golden)}";
+        $"{partOfDay} golden hour {golden.Start.Clock()}–{golden.End.Clock()}{LightFrom(golden)}";
 
     private static string LightFrom(LightWindow window) =>
         window.LightFromAzimuth is { } az ? $", light from the {Compass(az)}" : "";

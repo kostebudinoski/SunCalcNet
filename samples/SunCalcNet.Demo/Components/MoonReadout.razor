@@ -2,7 +2,7 @@
 
 <div class="with-info">
     <dt>@Label <InfoTip Label="@Label" Text="@(Description + (SkippedToday ? " " + AlmanacDay.MoonDescriptions.Missing : ""))" /></dt>
-    <dd>@(Time is { } t ? Day.ToLocal(t).ToString("HH:mm") : "—")</dd>
+    <dd>@(Time is { } t ? Day.ToLocal(t).Clock() : "—")</dd>
 </div>
 
 @code {

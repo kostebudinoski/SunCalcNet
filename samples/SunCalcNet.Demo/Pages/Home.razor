@@ -422,7 +422,7 @@
 
     private bool IsPolarDay => day!.Samples.All(x => x.SunAltitude > -0.833);
 
-    private string Local(DateTime utc) => day!.ToLocal(utc).ToString("HH:mm");
+    private string Local(DateTime utc) => day!.ToLocal(utc).Clock();
 
     // polar days put some events on the neighbouring calendar date; say so instead of hiding them
     private string DayHint(DateTime utc) =>

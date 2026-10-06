@@ -10,7 +10,7 @@
         @foreach (var e in Day.SunEvents.Where(e => Labelled.Contains(e.Name) && Day.IsToday(e.Utc)))
         {
             <span class="ribbon-event @Anchor(e.Name)" style="left:@P(Day.MinuteOf(e.Utc) / Day.LengthMinutes)">
-                <small>@Short(e.Name)</small> @Day.ToLocal(e.Utc).ToString("HH:mm")
+                <small>@Short(e.Name)</small> @Day.ToLocal(e.Utc).Clock()
             </span>
         }
     </div>
@@ -40,17 +40,17 @@
         @foreach (var (time, label) in MoonMarks)
         {
             <span class="moon-mark" style="left:@P(Day.MinuteOf(time) / Day.LengthMinutes)">
-                @label @Day.ToLocal(time).ToString("HH:mm")
+                @label @Day.ToLocal(time).Clock()
             </span>
         }
 
         <span class="cursor" style="left:@P(Minute / Day.LengthMinutes)"></span>
         <span class="body moon" style="left:@P(Minute / Day.LengthMinutes); top:@P(Y(Position.MoonAltitude) / 100)"></span>
         <span class="body sun" style="left:@P(Minute / Day.LengthMinutes); top:@P(Y(Position.SunAltitude) / 100)"></span>
-        <span class="cursor-time" style="left:@P(Math.Clamp(Minute / Day.LengthMinutes, 0.03, 0.97))">@Day.ToLocal(Day.StartUtc.AddMinutes(Minute)).ToString("HH:mm")</span>
+        <span class="cursor-time" style="left:@P(Math.Clamp(Minute / Day.LengthMinutes, 0.03, 0.97))">@Day.ToLocal(Day.StartUtc.AddMinutes(Minute)).Clock()</span>
 
         <input class="scrub" type="range" min="0" max="@F(Day.LengthMinutes - 1)" step="1" value="@F(Minute)"
-               @oninput="OnInput" aria-label="Time of day" aria-valuetext="@Day.ToLocal(Day.StartUtc.AddMinutes(Minute)).ToString("HH:mm")" />
+               @oninput="OnInput" aria-label="Time of day" aria-valuetext="@Day.ToLocal(Day.StartUtc.AddMinutes(Minute)).Clock()" />
     </div>
 
     <div class="ribbon-hours" aria-hidden="true">

@@ -234,13 +234,13 @@ public static class Upcoming
             if (!IsEdge(earliestSunset, scan))
             {
                 yield return Event(earliestSunset, UpcomingKind.Light, "Earliest sunset of the year",
-                    $"{earliestSunset.Sunset:HH:mm}{Why(earliestSunset, days)}", earliestSunset.Sunset!.Value);
+                    $"{earliestSunset.Sunset!.Value.Clock()}{Why(earliestSunset, days)}", earliestSunset.Sunset!.Value);
             }
 
             if (!IsEdge(latestSunrise, scan))
             {
                 yield return Event(latestSunrise, UpcomingKind.Light, "Latest sunrise of the year",
-                    $"{latestSunrise.Sunrise:HH:mm}{Why(latestSunrise, days)}", latestSunrise.Sunrise!.Value);
+                    $"{latestSunrise.Sunrise!.Value.Clock()}{Why(latestSunrise, days)}", latestSunrise.Sunrise!.Value);
             }
         }
     }
