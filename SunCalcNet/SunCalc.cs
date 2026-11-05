@@ -127,6 +127,12 @@ public static class SunCalc
         var dt = SunTime.SolarTransit(d + Constants.J0 + lw / (2 * Math.PI), lw);
         var dec = Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt)).Declination;
 
+        // sine of the Sun's altitude at transit and at the nadirs either side (H = 0 and π), bracketing
+        // every rise and set; the nadirs use their own declination, which matters on regime-boundary days
+        var sNoon = Math.Cos(phi - dec);
+        var sNadir1 = -Math.Cos(phi + Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt - 0.5)).Declination);
+        var sNadir2 = -Math.Cos(phi + Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt + 0.5)).Declination);
+
         var sunPhaseCol = new List<SunPhase>
         {
             new(SunPhaseName.SolarNoon, day.ToResult((dt + Constants.J2000).FromJulian())),
@@ -137,8 +143,8 @@ public static class SunCalc
         {
             var h0 = (sunPhase.Angle + dh) * Constants.Rad;
 
-            var jrise = SunTime.GetSetJ(h0, dt, -1, lw, phi, dec);
-            var jset = SunTime.GetSetJ(h0, dt, 1, lw, phi, dec);
+            var jrise = SunTime.GetSetJ(h0, dt - 0.5, dt, sNadir1, sNoon, dt, lw, phi, dec);
+            var jset = SunTime.GetSetJ(h0, dt, dt + 0.5, sNoon, sNadir2, dt, lw, phi, dec);
 
             // a NaN means the Sun never reaches this altitude on this day — omit that event
             if (!double.IsNaN(jrise))

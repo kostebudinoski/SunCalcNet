@@ -150,6 +150,113 @@ public class SunCalcTests
         Assert.Contains(sunPhases, x => x.Name == SunPhaseName.Custom("blueHourDawn"));
     }
 
+    // on days the Sun barely reaches an altitude, each event lands on its line within its half day or is
+    // absent — never thrown hours or days away by an ill-conditioned step; JPL Horizons times (suncalc #191)
+    [Theory]
+    [InlineData("2026-05-22", 51.5074, -0.1278, "Night", null)]
+    [InlineData("2026-05-22", 51.5074, -0.1278, "Night End", "2026-05-22T00:18:06Z")]
+    [InlineData("2027-07-26", 52.52, 13.405, "Night End", null)]
+    [InlineData("2027-07-26", 52.52, 13.405, "Night", "2027-07-26T22:50:31Z")]
+    [InlineData("2026-08-14", 69.6496, 18.956, "Dawn", null)]
+    [InlineData("2026-08-14", 69.6496, 18.956, "Dusk", "2026-08-14T22:14:03Z")]
+    [InlineData("2026-05-18", 69.6496, 18.956, "Sunrise", "2026-05-17T22:52:02Z")]
+    [InlineData("2026-07-25", 69.6496, 18.956, "Sunset", "2026-07-25T22:37:09Z")]
+    [InlineData("2026-04-18", 67, 18.956, "Nautical Dusk", null)]
+    public void Get_Sun_Phases_Resolves_Grazing_Events_Or_Omits_Them(string day, double lat, double lng, string name, string expected)
+    {
+        //Arrange
+        var date = DateTimeOffset.Parse($"{day}T12:00:00Z");
+
+        //Act
+        var phase = SunCalc.GetSunPhases(date, lat, lng).Where(x => x.Name.Value == name).Cast<SunPhase?>().FirstOrDefault();
+
+        //Assert
+        if (expected is null)
+        {
+            Assert.True(phase is null, $"{day} {name}: {phase?.PhaseTime:O}");
+        }
+        else
+        {
+            Assert.True(phase.HasValue, $"{day} {name} missing");
+            var error = (phase.Value.PhaseTime - DateTimeOffset.Parse(expected)).Duration();
+            Assert.True(error < TimeSpan.FromMinutes(1), $"{day} {name}: {phase.Value.PhaseTime:O}");
+        }
+    }
+
+    [Fact]
+    public void Get_Sun_Phases_Keeps_Every_Event_On_Its_Altitude_Within_Its_Half_Day()
+    {
+        //Arrange
+        const double lng = 10;
+        const double belowHorizonRefraction = 0.484; // GetSunPosition adds a constant refraction below the horizon
+
+        for (var lat = 48.0; lat <= 72; lat += 0.5)
+        {
+            for (var day = 0; day < 365; day += 3)
+            {
+                //Act
+                var date = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero).AddDays(day);
+                var phases = SunCalc.GetSunPhases(date, lat, lng).ToList();
+                var noon = phases.First(x => x.Name == SunPhaseName.SolarNoon).PhaseTime;
+
+                //Assert
+                foreach (var angle in SunPhaseAngle.Default)
+                {
+                    foreach (var (name, side) in new[] { (angle.RiseName, -1), (angle.SetName, 1) })
+                    {
+                        if (!phases.Any(x => x.Name == name))
+                        {
+                            continue;
+                        }
+
+                        var phase = phases.First(x => x.Name == name);
+
+                        var fromNoon = (phase.PhaseTime - noon).TotalHours * side;
+                        Assert.True(fromNoon is >= 0 and <= 12, $"{lat} {day} {name} outside its half day");
+
+                        if (angle.Angle < -1)
+                        {
+                            var altitude = SunCalc.GetSunPosition(phase.PhaseTime, lat, lng).Altitude / Math.PI * 180 - belowHorizonRefraction;
+                            Assert.True(Math.Abs(altitude - angle.Angle) < 0.01, $"{lat} {day} {name} at {altitude}°");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void Find_Time_Returns_The_Time_Of_A_Phase_That_Occurs()
+    {
+        //Arrange
+        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
+        var angles = SunPhaseAngle.Default.Append(new SunPhaseAngle(-4, "blueHourDawn", "blueHourDusk"));
+        var sunPhases = SunCalc.GetSunPhases(date, 50.5, 30.5, angles).ToList();
+
+        //Act
+        var sunrise = sunPhases.FindTime(SunPhaseName.Sunrise);
+        var blueHourDawn = sunPhases.FindTime(SunPhaseName.Custom("blueHourDawn"));
+
+        //Assert
+        Assert.Equal("2013-03-05 04:33:31", sunrise?.ToString("yyyy-MM-dd HH:mm:ss"));
+        Assert.Equal("2013-03-05 04:13:30", blueHourDawn?.ToString("yyyy-MM-dd HH:mm:ss"));
+    }
+
+    [Fact]
+    public void Find_Time_Returns_Null_When_The_Phase_Does_Not_Occur()
+    {
+        //Arrange
+        var date = new DateTimeOffset(2026, 5, 22, 12, 0, 0, TimeSpan.Zero);
+        var sunPhases = SunCalc.GetSunPhases(date, 51.5074, -0.1278).ToList(); // London: no astronomical night
+
+        //Act
+        var night = sunPhases.FindTime(SunPhaseName.Night);
+
+        //Assert
+        Assert.Null(night);
+        Assert.NotNull(sunPhases.FindTime(SunPhaseName.NightEnd));
+    }
+
     [Fact]
     public void Get_Sun_Phases_Returns_Times_At_The_Offset_Of_The_Given_Date()
     {

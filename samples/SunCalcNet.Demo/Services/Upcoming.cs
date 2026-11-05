@@ -160,8 +160,8 @@ public static class Upcoming
                 noon,
                 Declination(equator.Altitude * Deg, equator.Azimuth * Deg + 180),
                 altitude,
-                phases.FirstOrDefault(x => x.Name == SunPhaseName.Sunrise).Name is null ? null : phases.First(x => x.Name == SunPhaseName.Sunrise).PhaseTime,
-                phases.FirstOrDefault(x => x.Name == SunPhaseName.Sunset).Name is null ? null : phases.First(x => x.Name == SunPhaseName.Sunset).PhaseTime,
+                phases.FindTime(SunPhaseName.Sunrise),
+                phases.FindTime(SunPhaseName.Sunset),
                 zone.GetUtcOffset(LocalNoon(date, zone))));
         }
 

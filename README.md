@@ -66,6 +66,10 @@ foreach (var sunPhase in sunPhases)
 {
     Console.WriteLine($"{sunPhase.Name}: {sunPhase.PhaseTime:HH:mm zzz}"); // Sunrise: 06:33 +02:00 ...
 }
+
+// A phase is omitted on days the sun doesn't reach its angle (e.g. no Night on a summer night in London),
+// so look one up with FindTime, which returns null in that case
+DateTimeOffset? night = sunPhases.FindTime(SunPhaseName.Night);
 ```
 Get Sun phases with custom angles
 

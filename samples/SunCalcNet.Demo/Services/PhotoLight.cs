@@ -54,9 +54,7 @@ public sealed class PhotoLight
         var noon = Noon(day.Date, zone);
 
         var phases = SunCalc.GetSunPhases(noon, place.Lat, place.Lng, Angles, zone).ToList();
-        DateTimeOffset? At(string name) => phases.FirstOrDefault(x => x.Name == SunPhaseName.Custom(name)).Name is null
-            ? null
-            : phases.First(x => x.Name == SunPhaseName.Custom(name)).PhaseTime;
+        DateTimeOffset? At(string name) => phases.FindTime(SunPhaseName.Custom(name));
 
         Morning = new LightSession("Morning",
             BlueHour: Window(place, "Blue hour", At("blue-am-start"), At("golden-am-start")),
@@ -106,9 +104,9 @@ public sealed class PhotoLight
         var place = day.Place;
         var night = day.Find(SunPhaseName.Night);
         var nextDay = SunCalc.GetSunPhases(Noon(day.Date.AddDays(1), zone), place.Lat, place.Lng, zone).ToList();
-        var nightEnd = nextDay.FirstOrDefault(x => x.Name == SunPhaseName.NightEnd);
+        var nightEnd = nextDay.FindTime(SunPhaseName.NightEnd);
 
-        if (night is null || nightEnd.Name is null)
+        if (night is null || nightEnd is null)
         {
             return ([], day.Samples.Max(x => x.SunAltitude) < -18
                 ? "Polar night: dark all day, so plan around the moon"
@@ -116,7 +114,7 @@ public sealed class PhotoLight
         }
 
         var start = new DateTimeOffset(night.Utc).ToOffset(zone.GetUtcOffset(night.Utc));
-        var end = nightEnd.PhaseTime;
+        var end = nightEnd.Value;
 
         var windows = new List<LightWindow>();
         DateTimeOffset? open = null;

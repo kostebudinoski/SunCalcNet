@@ -187,9 +187,7 @@ public sealed class AlmanacDay
 
     private static TimeSpan? GetDayLength(IReadOnlyList<SunPhase> phases)
     {
-        var rise = phases.FirstOrDefault(x => x.Name == SunPhaseName.Sunrise);
-        var set = phases.FirstOrDefault(x => x.Name == SunPhaseName.Sunset);
-        return rise.Name is not null && set.Name is not null ? set.PhaseTime - rise.PhaseTime : null;
+        return phases.FindTime(SunPhaseName.Sunset) - phases.FindTime(SunPhaseName.Sunrise);
     }
 
     public SunEvent? Find(SunPhaseName name) => SunEvents.FirstOrDefault(x => x.Name == name);
