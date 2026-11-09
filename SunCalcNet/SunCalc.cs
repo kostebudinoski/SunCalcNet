@@ -124,19 +124,32 @@ public static class SunCalc
         // the solar transit nearest the anchor (local noon for a civil day) is this day's solar noon;
         // round to it on the observer's meridian, then let SolarTransit refine
         var d = Math.Round(day.AnchorUtc.ToDaysSinceJ2000() - Constants.J0 - lw / (2 * Math.PI));
-        var dt = SunTime.SolarTransit(d + Constants.J0 + lw / (2 * Math.PI), lw);
-        var dec = Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt)).Declination;
+        var today = SunTime.GetSolarDay(d + Constants.J0 + lw / (2 * Math.PI), lw, phi);
+        var dt = today.Transit;
+        var dec = today.Declination;
+        var sNoon = today.SinNoonAltitude;
 
-        // sine of the Sun's altitude at transit and at the nadirs either side (H = 0 and π), bracketing
-        // every rise and set; the nadirs use their own declination, which matters on regime-boundary days
-        var sNoon = Math.Cos(phi - dec);
+        // sine of the Sun's altitude at the nadirs either side of transit (H = π), bracketing with sNoon every
+        // rise and set; the nadirs use their own declination, which matters on regime-boundary days
         var sNadir1 = -Math.Cos(phi + Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt - 0.5)).Declination);
         var sNadir2 = -Math.Cos(phi + Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(dt + 0.5)).Declination);
+
+        // the civil day is this solar day [dt - 0.5, dt + 0.5) shifted by up to half a day (and 23 or 25 h long on a
+        // clock change), so it can also take in the evening of the previous solar day and/or the morning of the next;
+        // an event this solar day puts outside the civil day is looked up there instead
+        var start = day.StartUtc.ToDaysSinceJ2000();
+        var end = day.EndUtc.ToDaysSinceJ2000();
+        SolarDay? prev = start < dt - 0.5 ? SunTime.GetSolarDay(dt - 1, lw, phi) : null;
+        SolarDay? next = end > dt + 0.5 ? SunTime.GetSolarDay(dt + 1, lw, phi) : null;
+
+        // solar days run up to ~30 s longer than 24 h and a civil day can be 23 h, so a civil day can miss a nadir;
+        // keep this solar day's one then, so solar noon and nadir are always there
+        var nadir = next is { } n && n.Transit - 0.5 < end && !(dt - 0.5 >= start) ? n.Transit - 0.5 : dt - 0.5;
 
         var sunPhaseCol = new List<SunPhase>
         {
             new(SunPhaseName.SolarNoon, day.ToResult((dt + Constants.J2000).FromJulian())),
-            new(SunPhaseName.Nadir, day.ToResult((dt + Constants.J2000 - 0.5).FromJulian()))
+            new(SunPhaseName.Nadir, day.ToResult((nadir + Constants.J2000).FromJulian()))
         };
 
         foreach (var sunPhase in phaseAngles)
@@ -146,13 +159,23 @@ public static class SunCalc
             var jrise = SunTime.GetSetJ(h0, dt - 0.5, dt, sNadir1, sNoon, dt, lw, phi, dec);
             var jset = SunTime.GetSetJ(h0, dt, dt + 0.5, sNoon, sNadir2, dt, lw, phi, dec);
 
-            // a NaN means the Sun never reaches this altitude on this day — omit that event
-            if (!double.IsNaN(jrise))
+            // NaN-safe comparisons: a NaN (the Sun never reaches this altitude) is outside the day too
+            if (next is { } nd && !(jrise >= start))
+            {
+                jrise = SunTime.GetSetJ(h0, dt + 0.5, nd.Transit, sNadir2, nd.SinNoonAltitude, nd.Transit, lw, phi, nd.Declination);
+            }
+
+            if (prev is { } pd && !(jset < end))
+            {
+                jset = SunTime.GetSetJ(h0, pd.Transit, dt - 0.5, pd.SinNoonAltitude, sNadir1, pd.Transit, lw, phi, pd.Declination);
+            }
+
+            if (jrise >= start && jrise < end)
             {
                 sunPhaseCol.Add(new SunPhase(sunPhase.RiseName, day.ToResult((jrise + Constants.J2000).FromJulian())));
             }
 
-            if (!double.IsNaN(jset))
+            if (jset >= start && jset < end)
             {
                 sunPhaseCol.Add(new SunPhase(sunPhase.SetName, day.ToResult((jset + Constants.J2000).FromJulian())));
             }

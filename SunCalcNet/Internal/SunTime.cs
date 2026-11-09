@@ -30,6 +30,20 @@ internal static class SunTime
     }
 
     /// <summary>
+    /// The solar day whose transit is nearest <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Approximate transit, days since J2000 (UT).</param>
+    /// <param name="lw">Longitude west in radians.</param>
+    /// <param name="phi">Observer latitude in radians.</param>
+    /// <returns>The refined transit with the Sun's declination and altitude then.</returns>
+    internal static SolarDay GetSolarDay(double dt, double lw, double phi)
+    {
+        var transit = SolarTransit(dt, lw);
+        var dec = Sun.GetApparentEquatorialCoords(AstroTime.ToDaysTt(transit)).Declination;
+        return new SolarDay(transit, dec, Math.Cos(phi - dec));
+    }
+
+    /// <summary>
     /// Time the Sun reaches altitude <paramref name="h0"/> within the half day [<paramref name="a"/>, <paramref name="b"/>]
     /// between transit and nadir. Altitude is monotonic over the half day, so a sign change means exactly one crossing.
     /// Seeds from the hour angle at transit declination, then runs Newton on sin(h) kept inside a shrinking bracket,

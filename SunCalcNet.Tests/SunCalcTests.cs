@@ -47,7 +47,7 @@ public class SunCalcTests
             new(SunPhaseName.GoldenHour, new DateTime(2013, 3, 5, 15, 2, 14, DateTimeKind.Utc)),
         };
 
-        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
+        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.FromHours(2)); // Kyiv, EET
         var lat = 50.5;
         var lng = 30.5;
 
@@ -60,7 +60,7 @@ public class SunCalcTests
             var sunPhaseValue = sunPhases.First(x => x.Name == testSunPhase.Name);
 
             var testDataPhaseTime = testSunPhase.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss");
-            var sunPhaseTime = sunPhaseValue.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss");
+            var sunPhaseTime = sunPhaseValue.PhaseTime.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss");
             Assert.Equal(testDataPhaseTime, sunPhaseTime);
         }
     }
@@ -92,7 +92,7 @@ public class SunCalcTests
             new(SunPhaseName.Sunset, new DateTime(2013, 3, 5, 15, 56, 8, DateTimeKind.Utc))
         };
 
-        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.Zero);
+        var date = new DateTimeOffset(2013, 3, 5, 0, 0, 0, TimeSpan.FromHours(2)); // Kyiv, EET
         var lat = 50.5;
         var lng = 30.5;
         var height = 2000;
@@ -106,7 +106,7 @@ public class SunCalcTests
             var sunPhaseValue = sunPhases.First(x => x.Name == testSunPhase.Name);
 
             var testDataPhaseTime = testSunPhase.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss");
-            var sunPhaseTime = sunPhaseValue.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss");
+            var sunPhaseTime = sunPhaseValue.PhaseTime.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss");
             Assert.Equal(testDataPhaseTime, sunPhaseTime);
         }
     }
@@ -153,19 +153,20 @@ public class SunCalcTests
     // on days the Sun barely reaches an altitude, each event lands on its line within its half day or is
     // absent — never thrown hours or days away by an ill-conditioned step; JPL Horizons times (suncalc #191)
     [Theory]
-    [InlineData("2026-05-22", 51.5074, -0.1278, "Night", null)]
-    [InlineData("2026-05-22", 51.5074, -0.1278, "Night End", "2026-05-22T00:18:06Z")]
-    [InlineData("2027-07-26", 52.52, 13.405, "Night End", null)]
-    [InlineData("2027-07-26", 52.52, 13.405, "Night", "2027-07-26T22:50:31Z")]
-    [InlineData("2026-08-14", 69.6496, 18.956, "Dawn", null)]
-    [InlineData("2026-08-14", 69.6496, 18.956, "Dusk", "2026-08-14T22:14:03Z")]
-    [InlineData("2026-05-18", 69.6496, 18.956, "Sunrise", "2026-05-17T22:52:02Z")]
-    [InlineData("2026-07-25", 69.6496, 18.956, "Sunset", "2026-07-25T22:37:09Z")]
-    [InlineData("2026-04-18", 67, 18.956, "Nautical Dusk", null)]
-    public void Get_Sun_Phases_Resolves_Grazing_Events_Or_Omits_Them(string day, double lat, double lng, string name, string expected)
+    // each at its local mean time (longitude / 15), so the local day is the solar day these grazing events are judged on
+    [InlineData("2026-05-22", 51.5074, -0.1278, "+00:00", "Night", null)]
+    [InlineData("2026-05-22", 51.5074, -0.1278, "+00:00", "Night End", "2026-05-22T00:18:06Z")]
+    [InlineData("2027-07-26", 52.52, 13.405, "+00:54", "Night End", null)]
+    [InlineData("2027-07-26", 52.52, 13.405, "+00:54", "Night", "2027-07-26T22:50:31Z")]
+    [InlineData("2026-08-14", 69.6496, 18.956, "+01:16", "Dawn", null)]
+    [InlineData("2026-08-14", 69.6496, 18.956, "+01:16", "Dusk", "2026-08-14T22:14:03Z")]
+    [InlineData("2026-05-18", 69.6496, 18.956, "+01:16", "Sunrise", "2026-05-17T22:52:02Z")]
+    [InlineData("2026-07-25", 69.6496, 18.956, "+01:16", "Sunset", "2026-07-25T22:37:09Z")]
+    [InlineData("2026-04-18", 67, 18.956, "+01:16", "Nautical Dusk", null)]
+    public void Get_Sun_Phases_Resolves_Grazing_Events_Or_Omits_Them(string day, double lat, double lng, string offset, string name, string expected)
     {
         //Arrange
-        var date = DateTimeOffset.Parse($"{day}T12:00:00Z");
+        var date = DateTimeOffset.Parse($"{day}T12:00:00{offset}");
 
         //Act
         var phase = SunCalc.GetSunPhases(date, lat, lng).Where(x => x.Name.Value == name).Cast<SunPhase?>().FirstOrDefault();
@@ -184,7 +185,7 @@ public class SunCalcTests
     }
 
     [Fact]
-    public void Get_Sun_Phases_Keeps_Every_Event_On_Its_Altitude_Within_Its_Half_Day()
+    public void Get_Sun_Phases_Keeps_Every_Event_On_Its_Altitude_Within_The_Local_Day()
     {
         //Arrange
         const double lng = 10;
@@ -197,12 +198,12 @@ public class SunCalcTests
                 //Act
                 var date = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero).AddDays(day);
                 var phases = SunCalc.GetSunPhases(date, lat, lng).ToList();
-                var noon = phases.First(x => x.Name == SunPhaseName.SolarNoon).PhaseTime;
+                var start = date.AddHours(-12);
 
                 //Assert
                 foreach (var angle in SunPhaseAngle.Default)
                 {
-                    foreach (var (name, side) in new[] { (angle.RiseName, -1), (angle.SetName, 1) })
+                    foreach (var name in new[] { angle.RiseName, angle.SetName })
                     {
                         if (!phases.Any(x => x.Name == name))
                         {
@@ -211,8 +212,7 @@ public class SunCalcTests
 
                         var phase = phases.First(x => x.Name == name);
 
-                        var fromNoon = (phase.PhaseTime - noon).TotalHours * side;
-                        Assert.True(fromNoon is >= 0 and <= 12, $"{lat} {day} {name} outside its half day");
+                        Assert.True(phase.PhaseTime >= start && phase.PhaseTime < start.AddDays(1), $"{lat} {day} {name} outside the day");
 
                         if (angle.Angle < -1)
                         {
@@ -272,7 +272,8 @@ public class SunCalcTests
 
         //Assert
         Assert.All(kyivPhases, x => Assert.Equal(TimeSpan.FromHours(2), x.PhaseTime.Offset));
-        Assert.Equal(utcPhases, kyivPhases);
+        // the UTC and Kyiv days overlap in all but two hours: the same events, except the nadir at 22:09 UTC
+        Assert.Equal(utcPhases.Where(x => x.Name != SunPhaseName.Nadir), kyivPhases.Where(x => x.Name != SunPhaseName.Nadir));
         var sunrise = kyivPhases.First(x => x.Name == SunPhaseName.Sunrise);
         Assert.Equal("2013-03-05 06:33:31 +02:00", sunrise.PhaseTime.ToString("yyyy-MM-dd HH:mm:ss zzz"));
     }

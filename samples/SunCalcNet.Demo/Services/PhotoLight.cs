@@ -51,9 +51,9 @@ public sealed class PhotoLight
     {
         var place = day.Place;
         var zone = day.Zone;
-        var noon = Noon(day.Date, zone);
 
-        var phases = SunCalc.GetSunPhases(noon, place.Lat, place.Lng, Angles, zone).ToList();
+        // the solar day, so a high-summer blue hour that runs past midnight is still this evening's
+        var phases = SolarDayPhases.Get(day.Date, place, zone, Angles);
         DateTimeOffset? At(string name) => phases.FindTime(SunPhaseName.Custom(name));
 
         Morning = new LightSession("Morning",
@@ -102,18 +102,18 @@ public sealed class PhotoLight
     private static (IReadOnlyList<LightWindow>, string?) FindDarkSky(AlmanacDay day, TimeZoneInfo zone)
     {
         var place = day.Place;
-        var night = day.Find(SunPhaseName.Night);
-        var nextDay = SunCalc.GetSunPhases(Noon(day.Date.AddDays(1), zone), place.Lat, place.Lng, zone).ToList();
-        var nightEnd = nextDay.FindTime(SunPhaseName.NightEnd);
+        // this evening's dusk and tomorrow morning's dawn, either of which can fall on the far side of midnight
+        var night = day.FindInSolarDay(SunPhaseName.Night);
+        var nightEnd = SolarDayPhases.Get(day.Date.AddDays(1), place, zone).FindTime(SunPhaseName.NightEnd);
 
-        if (night is null || nightEnd is null)
+        if (night is not { } nightUtc || nightEnd is null)
         {
             return ([], day.Samples.Max(x => x.SunAltitude) < -18
                 ? "Polar night: dark all day, so plan around the moon"
                 : "No astronomical darkness tonight: the sun never gets 18° below the horizon");
         }
 
-        var start = new DateTimeOffset(night.Utc).ToOffset(zone.GetUtcOffset(night.Utc));
+        var start = new DateTimeOffset(nightUtc).ToOffset(zone.GetUtcOffset(nightUtc));
         var end = nightEnd.Value;
 
         var windows = new List<LightWindow>();
@@ -226,10 +226,4 @@ public sealed class PhotoLight
     }
 
     private static DateTimeOffset Local(DateTimeOffset t, TimeZoneInfo zone) => TimeZoneInfo.ConvertTime(t, zone);
-
-    private static DateTimeOffset Noon(DateOnly date, TimeZoneInfo zone)
-    {
-        var local = date.ToDateTime(new TimeOnly(12, 0));
-        return new DateTimeOffset(local, zone.GetUtcOffset(local));
-    }
 }

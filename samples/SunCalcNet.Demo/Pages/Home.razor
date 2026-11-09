@@ -468,8 +468,9 @@
         yield return ("Evening", Twilight(SunPhaseName.Sunset, SunPhaseName.Night, "after sunset"), evening);
     }
 
+    // from the solar day, not the calendar day: tonight's Night can start after midnight
     private string? Twilight(SunPhaseName from, SunPhaseName to, string relation) =>
-        day!.Find(from) is { } a && day.Find(to) is { } b ? $"{Duration(b.Utc - a.Utc)} of twilight {relation}" : null;
+        day!.FindInSolarDay(from) is { } a && day.FindInSolarDay(to) is { } b ? $"{Duration(b - a)} of twilight {relation}" : null;
 
     private static string Angle(SunPhaseName name) =>
         AlmanacDay.PhaseAngle(name) is { } angle ? (angle < 0 ? "−" : "+") + Math.Abs(angle).ToString("0.###", CultureInfo.InvariantCulture) + "°" : "";

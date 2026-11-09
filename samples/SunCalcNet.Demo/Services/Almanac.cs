@@ -136,8 +136,11 @@ public sealed class AlmanacDay
         }
 
         Samples = samples;
-        DayLength = GetDayLength(phases);
-        var yesterday = GetDayLength(SunCalc.GetSunPhases(localNoon.AddDays(-1), place.Lat, place.Lng, Zone).ToList());
+
+        // this morning's sunrise to this evening's sunset, which may be after midnight
+        solarDay = SolarDayPhases.Get(date, place, Zone);
+        DayLength = GetDayLength(solarDay);
+        var yesterday = GetDayLength(SolarDayPhases.Get(date.AddDays(-1), place, Zone));
         DayLengthChange = DayLength - yesterday;
 
         var moon = MoonCalc.GetMoonPhase(localNoon, place.Lat, place.Lng, Zone);
@@ -191,6 +194,14 @@ public sealed class AlmanacDay
     }
 
     public SunEvent? Find(SunPhaseName name) => SunEvents.FirstOrDefault(x => x.Name == name);
+
+    /// <summary>
+    /// This morning's or this evening's event (UTC), which unlike <see cref="Find"/> may fall just past midnight:
+    /// in Spain in June tonight's astronomical night starts at 00:12, while today's own list starts with last night's.
+    /// </summary>
+    public DateTime? FindInSolarDay(SunPhaseName name) => solarDay.FindTime(name)?.UtcDateTime;
+
+    private readonly IReadOnlyList<SunPhase> solarDay;
 
     // the library's azimuth is south-based radians, clockwise via west; the page uses compass degrees
     private static double ToNorthAzimuth(double azimuth) => ((azimuth * Deg + 180) % 360 + 360) % 360;
