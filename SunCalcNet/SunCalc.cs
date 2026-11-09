@@ -16,8 +16,11 @@ public static class SunCalc
     /// <param name="lat">The observer latitude in degrees.</param>
     /// <param name="lng">The observer longitude in degrees.</param>
     /// <returns>The sun's azimuth and apparent altitude, in radians.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="lat"/> is not within ±90°, or <paramref name="lng"/> is not a finite number.</exception>
     public static SunPosition GetSunPosition(DateTimeOffset date, double lat, double lng)
     {
+        Guard.Location(lat, lng);
+
         var lw = Constants.Rad * -lng;
         var phi = Constants.Rad * lat;
         var daysSinceJ2000 = date.ToDaysSinceJ2000();
@@ -42,6 +45,7 @@ public static class SunCalc
     /// <param name="lat">The observer latitude in degrees.</param>
     /// <param name="lng">The observer longitude in degrees.</param>
     /// <param name="height">The observer height above the horizon in meters.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="lat"/> is not within ±90°, or <paramref name="lng"/> or <paramref name="height"/> is not a finite number.</exception>
     public static IEnumerable<SunPhase> GetSunPhases(DateTimeOffset date, double lat, double lng, double height = 0)
     {
         return GetSunPhases(date, lat, lng, SunPhaseAngle.Default, height);
@@ -57,6 +61,7 @@ public static class SunCalc
     /// <param name="lng">The observer longitude in degrees.</param>
     /// <param name="phaseAngles">The sun phase angles to calculate rise/set events for.</param>
     /// <param name="height">The observer height above the horizon in meters.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="lat"/> is not within ±90°, or <paramref name="lng"/> or <paramref name="height"/> is not a finite number.</exception>
     public static IEnumerable<SunPhase> GetSunPhases(DateTimeOffset date, double lat, double lng, IEnumerable<SunPhaseAngle> phaseAngles, double height = 0)
     {
         return GetSunPhases(CivilDay.FromOffset(date), lat, lng, phaseAngles, height);
@@ -72,6 +77,7 @@ public static class SunCalc
     /// <param name="lng">The observer longitude in degrees.</param>
     /// <param name="timeZone">The observer's time zone.</param>
     /// <param name="height">The observer height above the horizon in meters.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="lat"/> is not within ±90°, or <paramref name="lng"/> or <paramref name="height"/> is not a finite number.</exception>
     public static IEnumerable<SunPhase> GetSunPhases(DateTimeOffset date, double lat, double lng, TimeZoneInfo timeZone, double height = 0)
     {
         return GetSunPhases(date, lat, lng, SunPhaseAngle.Default, timeZone, height);
@@ -87,6 +93,7 @@ public static class SunCalc
     /// <param name="phaseAngles">The sun phase angles to calculate rise/set events for.</param>
     /// <param name="timeZone">The observer's time zone.</param>
     /// <param name="height">The observer height above the horizon in meters.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="lat"/> is not within ±90°, or <paramref name="lng"/> or <paramref name="height"/> is not a finite number.</exception>
     public static IEnumerable<SunPhase> GetSunPhases(DateTimeOffset date, double lat, double lng, IEnumerable<SunPhaseAngle> phaseAngles, TimeZoneInfo timeZone, double height = 0)
     {
         return GetSunPhases(CivilDay.FromTimeZone(date, timeZone), lat, lng, phaseAngles, height);
@@ -115,6 +122,9 @@ public static class SunCalc
         {
             throw new ArgumentNullException(nameof(phaseAngles));
         }
+
+        Guard.Location(lat, lng);
+        Guard.Finite(height, nameof(height));
 
         var lw = Constants.Rad * -lng;
         var phi = Constants.Rad * lat;

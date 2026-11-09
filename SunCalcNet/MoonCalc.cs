@@ -15,8 +15,11 @@ public static class MoonCalc
     /// <param name="lat">The observer latitude in degrees.</param>
     /// <param name="lng">The observer longitude in degrees.</param>
     /// <returns>The moon position for the given date and location.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="lat"/> is not within ±90°, or <paramref name="lng"/> is not a finite number.</exception>
     public static MoonPosition GetMoonPosition(DateTimeOffset date, double lat, double lng)
     {
+        Guard.Location(lat, lng);
+
         var lw = Constants.Rad * -lng;
         var phi = Constants.Rad * lat;
         var moonPositionCalculation = GetMoonPositionCalculation(date.UtcDateTime, lw, phi);
@@ -79,6 +82,7 @@ public static class MoonCalc
     /// <param name="date">Any time on the day, with the observer's UTC offset.</param>
     /// <param name="lat">The observer latitude in degrees.</param>
     /// <param name="lng">The observer longitude in degrees.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="lat"/> is not within ±90°, or <paramref name="lng"/> is not a finite number.</exception>
     public static MoonPhase GetMoonPhase(DateTimeOffset date, double lat, double lng)
     {
         return GetMoonPhase(CivilDay.FromOffset(date), lat, lng);
@@ -93,6 +97,7 @@ public static class MoonCalc
     /// <param name="lat">The observer latitude in degrees.</param>
     /// <param name="lng">The observer longitude in degrees.</param>
     /// <param name="timeZone">The observer's time zone.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="lat"/> is not within ±90°, or <paramref name="lng"/> is not a finite number.</exception>
     public static MoonPhase GetMoonPhase(DateTimeOffset date, double lat, double lng, TimeZoneInfo timeZone)
     {
         return GetMoonPhase(CivilDay.FromTimeZone(date, timeZone), lat, lng);
@@ -109,6 +114,8 @@ public static class MoonCalc
 
     private static MoonPhase GetMoonPhase(CivilDay day, double lat, double lng)
     {
+        Guard.Location(lat, lng);
+
         var start = day.StartUtc;
         var hours = (day.EndUtc - start).TotalHours;
 

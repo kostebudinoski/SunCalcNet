@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SunCalcNet.Internal;
+using System;
 using System.Collections.Generic;
 
 namespace SunCalcNet.Model;
@@ -41,8 +42,10 @@ public class SunPhaseAngle
     /// <summary>
     /// Creates a sun phase angle with the given horizon angle (in degrees) and rise/set names.
     /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="angle"/> is not a finite number.</exception>
     public SunPhaseAngle(double angle, SunPhaseName riseName, SunPhaseName setName)
     {
+        Guard.Finite(angle, nameof(angle));
         Angle = angle;
         RiseName = riseName ?? throw new ArgumentNullException(nameof(riseName));
         SetName = setName ?? throw new ArgumentNullException(nameof(setName));

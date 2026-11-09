@@ -63,7 +63,7 @@ internal static class SunTime
     {
         var s0 = Math.Sin(h0);
         var rising = b <= dt;
-        if ((sa - s0) * (sb - s0) > 0)
+        if (!((sa - s0) * (sb - s0) <= 0))
         {
             return double.NaN; // sun stays above / below this altitude all half day
         }
@@ -104,7 +104,7 @@ internal static class SunTime
             else
             {
                 d = (a + b) / 2;
-                if (b - a < 1e-8)
+                if (!(b - a >= 1e-8))
                 {
                     return d;
                 }
